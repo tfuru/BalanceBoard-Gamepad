@@ -38,7 +38,7 @@ flowchart LR
 ## 🛠 開発・動作環境
 
 - **ファームウェア**: [PlatformIO Core (CLI)](https://docs.platformio.org/) / `make`
-- **PC設定アプリ**: PC 用アプリケーション (開発予定)
+- **PC設定アプリ**: [Flutter](https://flutter.dev/) (macOS / Windows / Linux デスクトップ対応)
 
 ---
 
