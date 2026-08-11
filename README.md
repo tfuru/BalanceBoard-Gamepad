@@ -68,6 +68,26 @@ make monitor
 make clean
 ```
 
+
+---
+
+## 📦 アプリのリリースと実行ファイルのビルド (GitHub Actions)
+
+GitHub にタグ（例: `v1.0.0`）をプッシュすると、GitHub Actions ワークフローが自動起動し、**macOS** および **Windows** 向けの実行ファイル（`.zip`）が作成されて GitHub Release に添付されます。
+
+### タグの作成とプッシュ手順
+
+```bash
+# 1. リリースタグを作成 (例: v1.0.0)
+git tag v1.0.0
+
+# 2. タグを GitHub にプッシュ
+git push origin v1.0.0
+```
+
+> [!TIP]
+> タグをプッシュ後、GitHub リポジトリの **Releases** ページから macOS 用 (`balance_board_app-macos.zip`) および Windows 用 (`balance_board_app-windows.zip`) の実行ファイルをダウンロードできます。
+
 ---
 
 ## 📁 リポジトリ構造
