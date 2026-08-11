@@ -21,26 +21,26 @@ bool WiiBalanceBoard::begin() {
     connected = false;
     state = WiiState::DISCONNECTED;
 
-    // ESP32 Bluetooth Controller 初期化 (BT Classic モード)
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    if (esp_bt_controller_init(&bt_cfg) != ESP_OK) {
-        ESP_LOGE(TAG, "esp_bt_controller_init 失敗");
-        return false;
+    // ESP32 Bluetooth Controller 初期化 (Arduino HAL btStart() 使用)
+    if (!btStarted()) {
+        if (!btStart()) {
+            ESP_LOGE(TAG, "btStart 失敗");
+            return false;
+        }
     }
 
-    if (esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT) != ESP_OK) {
-        ESP_LOGE(TAG, "esp_bt_controller_enable 失敗");
-        return false;
+    if (esp_bluedroid_get_status() == ESP_BLUEDROID_STATUS_UNINITIALIZED) {
+        if (esp_bluedroid_init() != ESP_OK) {
+            ESP_LOGE(TAG, "esp_bluedroid_init 失敗");
+            return false;
+        }
     }
 
-    if (esp_bluedroid_init() != ESP_OK) {
-        ESP_LOGE(TAG, "esp_bluedroid_init 失敗");
-        return false;
-    }
-
-    if (esp_bluedroid_enable() != ESP_OK) {
-        ESP_LOGE(TAG, "esp_bluedroid_enable 失敗");
-        return false;
+    if (esp_bluedroid_get_status() != ESP_BLUEDROID_STATUS_ENABLED) {
+        if (esp_bluedroid_enable() != ESP_OK) {
+            ESP_LOGE(TAG, "esp_bluedroid_enable 失敗");
+            return false;
+        }
     }
 
     // GAP コールバック登録
