@@ -54,7 +54,7 @@ class DashboardView extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -148,7 +148,6 @@ class DashboardView extends StatelessWidget {
                                             : (mode == OutputMode.virtualGamepad
                                                 ? const Color(0xFF38BDF8)
                                                 : Colors.white54)),
-
                                   ),
                                 ),
                               );
@@ -167,52 +166,51 @@ class DashboardView extends StatelessWidget {
             const SizedBox(height: 16),
 
             // メイン 2D 重心レーダー描画領域
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      data.isConnected ? '● Balance Board 接続中' : '○ Balance Board 未接続',
-                      style: TextStyle(
-                        color: data.isConnected ? const Color(0xFF10B981) : Colors.grey,
-                        fontWeight: FontWeight.bold,
-                      ),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    data.isConnected ? '● Balance Board 接続中' : '○ Balance Board 未接続',
+                    style: TextStyle(
+                      color: data.isConnected ? const Color(0xFF10B981) : Colors.grey,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: AspectRatio(
-                        aspectRatio: 1.0,
-                        child: CustomPaint(
-                          painter: CoGPainter(
-                            centerX: data.centerX,
-                            centerY: data.centerY,
-                            rawTR: data.topRight,
-                            rawBR: data.bottomRight,
-                            rawTL: data.topLeft,
-                            rawBL: data.bottomLeft,
-                            deadzone: provider.config.deadzone,
-                          ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 260,
+                    child: AspectRatio(
+                      aspectRatio: 1.0,
+                      child: CustomPaint(
+                        painter: CoGPainter(
+                          centerX: data.centerX,
+                          centerY: data.centerY,
+                          rawTR: data.topRight,
+                          rawBR: data.bottomRight,
+                          rawTL: data.topLeft,
+                          rawBL: data.bottomLeft,
+                          deadzone: provider.config.deadzone,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildMetricChip('合計重量', '${data.weightKg.toStringAsFixed(1)} kg'),
-                        _buildMetricChip('X 軸', data.centerX.toStringAsFixed(2)),
-                        _buildMetricChip('Y 軸', data.centerY.toStringAsFixed(2)),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildMetricChip('合計重量', '${data.weightKg.toStringAsFixed(1)} kg'),
+                      _buildMetricChip('X 軸', data.centerX.toStringAsFixed(2)),
+                      _buildMetricChip('Y 軸', data.centerY.toStringAsFixed(2)),
+                    ],
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -240,10 +238,10 @@ class DashboardView extends StatelessWidget {
                 onPressed: provider.isSerialConnected ? provider.sendTareCommand : null,
               ),
             ),
-
           ],
         ),
       ),
+
     );
   }
 
