@@ -39,6 +39,11 @@ class AppConfig {
   bool invertWasdX;
   bool invertWasdY;
 
+  // ジャンプ検出設定
+  bool enableJump;
+  double jumpThresholdKg;
+  int jumpHoldMs;
+
   AppConfig({
     this.selectedPort = '',
     this.baudRate = 115200,
@@ -53,7 +58,11 @@ class AppConfig {
     this.wasdThreshold = 0.15,
     this.invertWasdX = false,
     this.invertWasdY = false,
+    this.enableJump = true,
+    this.jumpThresholdKg = 5.0,
+    this.jumpHoldMs = 150,
   });
 }
+
 
 

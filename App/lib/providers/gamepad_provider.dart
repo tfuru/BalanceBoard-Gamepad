@@ -6,11 +6,14 @@ import '../services/serial_service.dart';
 import '../services/osc_service.dart';
 
 import '../services/keyboard_service.dart';
+import '../services/jump_detector.dart';
+
 
 class GamepadProvider extends ChangeNotifier {
   final SerialService _serialService = SerialService();
   late final OscService _oscService;
   late final KeyboardService _keyboardService;
+  final JumpDetector _jumpDetector = JumpDetector();
   StreamSubscription<String>? _dataSubscription;
 
   SensorData _currentData = const SensorData();
@@ -25,6 +28,7 @@ class GamepadProvider extends ChangeNotifier {
   bool get isSerialConnected => _isSerialConnected;
   String get statusMessage => _statusMessage;
   KeyboardService get keyboardService => _keyboardService;
+  bool get isJumping => _jumpDetector.isJumping;
 
   // モニタリング用のアクティブ出力計算値 Getter
   double get activeOscX {
@@ -56,7 +60,6 @@ class GamepadProvider extends ChangeNotifier {
     y *= _config.sensitivity;
     return y.clamp(-1.0, 1.0);
   }
-
 
   GamepadProvider() {
     _oscService = OscService(host: _config.oscHost, port: _config.oscPort);
@@ -132,6 +135,17 @@ class GamepadProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setEnableJump(bool enable) {
+    _config.enableJump = enable;
+    if (!enable) _jumpDetector.reset();
+    notifyListeners();
+  }
+
+  void setJumpThresholdKg(double value) {
+    _config.jumpThresholdKg = value;
+    notifyListeners();
+  }
+
   bool connect() {
     if (_config.selectedPort.isEmpty) {
       _statusMessage = 'シリアルポートが選択されていません';
@@ -160,8 +174,20 @@ class GamepadProvider extends ChangeNotifier {
     return success;
   }
 
-  /// 出力モードに応じたデータ中継処理
+  /// 出力モードに応じたデータ中継処理およびジャンプ判定
   void _handleDataOutput(SensorData data) {
+    // リアルタイムジャンプ検知
+    bool newlyJumping = _jumpDetector.processWeight(
+      data.weightKg,
+      thresholdKg: _config.jumpThresholdKg,
+      enabled: _config.enableJump,
+      holdMs: _config.jumpHoldMs,
+    );
+
+    if (newlyJumping) {
+      _dispatchJumpSignal();
+    }
+
     switch (_config.outputMode) {
       case OutputMode.oscInputController:
         _keyboardService.releaseAllKeys();
@@ -176,6 +202,31 @@ class GamepadProvider extends ChangeNotifier {
         break;
       case OutputMode.none:
         _keyboardService.releaseAllKeys();
+        break;
+    }
+  }
+
+  /// 各出力モードに応じたジャンプ信号の発行
+  void _dispatchJumpSignal() {
+    switch (_config.outputMode) {
+      case OutputMode.keyboardWasd:
+        _keyboardService.sendSpaceKey(true);
+        Timer(Duration(milliseconds: _config.jumpHoldMs), () {
+          _keyboardService.sendSpaceKey(false);
+          notifyListeners();
+        });
+        break;
+      case OutputMode.oscInputController:
+        _oscService.sendInt('/input/Jump', 1);
+        Timer(Duration(milliseconds: _config.jumpHoldMs), () {
+          _oscService.sendInt('/input/Jump', 0);
+          notifyListeners();
+        });
+        break;
+      case OutputMode.virtualGamepad:
+        // 仮想ゲームパッド A ボタンパースト
+        break;
+      case OutputMode.none:
         break;
     }
   }
@@ -234,6 +285,7 @@ class GamepadProvider extends ChangeNotifier {
     _dataSubscription = null;
     _serialService.disconnect();
     _keyboardService.releaseAllKeys();
+    _jumpDetector.reset();
     _isSerialConnected = false;
     _currentData = const SensorData();
     _statusMessage = '切断完了';
@@ -252,8 +304,10 @@ class GamepadProvider extends ChangeNotifier {
     _serialService.dispose();
     _oscService.dispose();
     _keyboardService.dispose();
+    _jumpDetector.dispose();
     super.dispose();
   }
 }
+
 
 

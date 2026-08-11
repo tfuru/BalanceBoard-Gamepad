@@ -262,7 +262,70 @@ class _SettingsViewState extends State<SettingsView> {
             const SizedBox(height: 12),
           ],
 
-          // デッドゾーン設定 Card
+          // ジャンプ検出設定 Card
+          Card(
+            color: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.unfold_more, color: Color(0xFFEC4899), size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'ジャンプ検出機能 (Jump Detection)',
+                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      Switch(
+                        value: provider.config.enableJump,
+                        activeColor: const Color(0xFFEC4899),
+                        onChanged: (val) => provider.setEnableJump(val),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'ボード上で跳び上がった（足が離れた / 荷重が抜けた）瞬間を自動検知してジャンプ信号を発行します。',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                  if (provider.config.enableJump) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '判定荷重閾値 (この重量以下でジャンプ)',
+                          style: TextStyle(color: Colors.white, fontSize: 13),
+                        ),
+                        Text(
+                          '${provider.config.jumpThresholdKg.toStringAsFixed(1)} kg',
+                          style: const TextStyle(color: Color(0xFFEC4899), fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    Slider(
+                      value: provider.config.jumpThresholdKg,
+                      min: 1.0,
+                      max: 15.0,
+                      divisions: 28,
+                      activeColor: const Color(0xFFEC4899),
+                      onChanged: (val) => provider.setJumpThresholdKg(val),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
           Card(
             color: const Color(0xFF1E293B),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

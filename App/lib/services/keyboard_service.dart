@@ -182,7 +182,42 @@ class KeyboardService {
     }
   }
 
+  /// スペースキー (Space) の KeyDown / KeyUp 送信
+  void sendSpaceKey(bool isDown) {
+    debugPrint('[KeyboardService] Key: SPACE -> ${isDown ? "DOWN" : "UP"}');
+    if (Platform.isMacOS) {
+      _sendRawMacOsKey(49, isDown); // 49 = Space
+    } else if (Platform.isWindows) {
+      _sendRawWindowsKey(0x20, isDown); // 0x20 = VK_SPACE
+    }
+  }
+
+  void _sendRawMacOsKey(int virtualKey, bool isDown) {
+    if (_cgEventCreateKeyboardEvent == null || _cgEventPost == null || _cfRelease == null) return;
+    try {
+      final event = _cgEventCreateKeyboardEvent!(nullptr, virtualKey, isDown);
+      if (event != nullptr) {
+        _cgEventPost!(0, event);
+        _cfRelease!(event);
+      }
+    } catch (e) {
+      debugPrint('[KeyboardService] macOS CGEvent エラー: $e');
+    }
+  }
+
+  void _sendRawWindowsKey(int vkCode, bool isDown) {
+    if (_keybdEvent == null) return;
+    try {
+      int flags = isDown ? 0 : 2;
+      _keybdEvent!(vkCode, 0, flags, nullptr);
+    } catch (e) {
+      debugPrint('[KeyboardService] Windows keybd_event エラー: $e');
+    }
+  }
+
   void dispose() {
     releaseAllKeys();
+    sendSpaceKey(false);
   }
+
 }

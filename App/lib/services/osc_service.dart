@@ -78,8 +78,55 @@ class OscService {
     return Uint8List.fromList(bytes);
   }
 
+  /// OSC アドレスに対して int32 値を送信
+  void sendInt(String address, int value) {
+    if (_socket == null) {
+      _initSocket().then((_) => _sendIntInternal(address, value));
+    } else {
+      _sendIntInternal(address, value);
+    }
+  }
+
+  void _sendIntInternal(String address, int value) {
+    if (_socket == null) return;
+    final Uint8List bytes = encodeOscInt(address, value);
+    try {
+      final destination = InternetAddress(_host);
+      _socket!.send(bytes, destination, _port);
+    } catch (e) {
+      debugPrint('[OSC Service] パケット送信エラー: $e');
+    }
+  }
+
+  /// OSC メッセージ (Address + ',i' + int32) のバイト配列エンコード
+  static Uint8List encodeOscInt(String address, int value) {
+    final List<int> bytes = [];
+
+    // 1. OSC Address
+    bytes.addAll(utf8.encode(address));
+    bytes.add(0); // NULL 終端
+    while (bytes.length % 4 != 0) {
+      bytes.add(0);
+    }
+
+    // 2. Type Tag String (',i')
+    bytes.addAll(utf8.encode(',i'));
+    bytes.add(0); // NULL 終端
+    while (bytes.length % 4 != 0) {
+      bytes.add(0);
+    }
+
+    // 3. Int32 Argument (Big-Endian)
+    final byteData = ByteData(4);
+    byteData.setInt32(0, value, Endian.big);
+    bytes.addAll(byteData.buffer.asUint8List());
+
+    return Uint8List.fromList(bytes);
+  }
+
   void dispose() {
     _socket?.close();
     _socket = null;
   }
 }
+
