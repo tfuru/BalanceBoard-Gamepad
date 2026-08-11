@@ -50,48 +50,61 @@ class DashboardView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.white10),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DropdownButton<String>(
-                    dropdownColor: const Color(0xFF1E293B),
-                    value: provider.config.selectedPort.isNotEmpty &&
-                            provider.availablePorts.contains(provider.config.selectedPort)
-                        ? provider.config.selectedPort
-                        : null,
-                    hint: const Text('COMポート選択', style: TextStyle(color: Colors.white54)),
-                    items: provider.availablePorts.map((port) {
-                      return DropdownMenuItem<String>(
-                        value: port,
-                        child: Text(port, style: const TextStyle(color: Colors.white)),
-                      );
-                    }).toList(),
-                    onChanged: provider.isSerialConnected
-                        ? null
-                        : (val) {
-                            if (val != null) provider.setSelectedPort(val);
-                          },
+                  Row(
+                    children: [
+                      DropdownButton<String>(
+                        dropdownColor: const Color(0xFF1E293B),
+                        value: provider.config.selectedPort.isNotEmpty &&
+                                provider.availablePorts.contains(provider.config.selectedPort)
+                            ? provider.config.selectedPort
+                            : null,
+                        hint: const Text('COMポート選択', style: TextStyle(color: Colors.white54)),
+                        items: provider.availablePorts.map((port) {
+                          return DropdownMenuItem<String>(
+                            value: port,
+                            child: Text(port, style: const TextStyle(color: Colors.white)),
+                          );
+                        }).toList(),
+                        onChanged: provider.isSerialConnected
+                            ? null
+                            : (val) {
+                                if (val != null) provider.setSelectedPort(val);
+                              },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, color: Colors.white70),
+                        onPressed: provider.isSerialConnected ? null : provider.refreshPorts,
+                      ),
+                      const Spacer(),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: provider.isSerialConnected
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF10B981),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                        icon: Icon(provider.isSerialConnected ? Icons.link_off : Icons.link),
+                        label: Text(provider.isSerialConnected ? '切断' : '接続'),
+                        onPressed: () {
+                          if (provider.isSerialConnected) {
+                            provider.disconnect();
+                          } else {
+                            provider.connect();
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: Colors.white70),
-                    onPressed: provider.isSerialConnected ? null : provider.refreshPorts,
-                  ),
-                  const Spacer(),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: provider.isSerialConnected
-                          ? const Color(0xFFEF4444)
-                          : const Color(0xFF10B981),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  const SizedBox(height: 6),
+                  Text(
+                    'ステータス: ${provider.statusMessage}',
+                    style: TextStyle(
+                      color: provider.isSerialConnected ? const Color(0xFF10B981) : Colors.white60,
+                      fontSize: 12,
                     ),
-                    icon: Icon(provider.isSerialConnected ? Icons.link_off : Icons.link),
-                    label: Text(provider.isSerialConnected ? '切断' : '接続'),
-                    onPressed: () {
-                      if (provider.isSerialConnected) {
-                        provider.disconnect();
-                      } else {
-                        provider.connect();
-                      }
-                    },
                   ),
                 ],
               ),
