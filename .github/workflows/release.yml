@@ -33,6 +33,10 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Install macOS build tools
+        if: matrix.target == 'macos'
+        run: brew install automake libtool autoconf
+
       - name: Install dependencies
         run: flutter pub get
         working-directory: App
