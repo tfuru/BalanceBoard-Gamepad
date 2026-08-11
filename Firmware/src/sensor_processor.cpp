@@ -4,6 +4,7 @@
 SensorProcessor::SensorProcessor()
     : deadzone(DEFAULT_DEADZONE), historyIndex(0) {
     tareOffset = {0, 0, 0, 0};
+    lastRawData = {0, 0, 0, 0};
     for (int i = 0; i < MOVING_AVERAGE_WINDOW; i++) {
         historyX[i] = 0.0f;
         historyY[i] = 0.0f;
@@ -15,7 +16,7 @@ void SensorProcessor::setTare(const RawSensorData& raw) {
 }
 
 void SensorProcessor::setTare() {
-    // raw値未指定時は処理をスキップ
+    tareOffset = lastRawData;
 }
 
 void SensorProcessor::resetTare() {
@@ -34,6 +35,8 @@ float SensorProcessor::applyDeadzone(float value, float threshold) {
 }
 
 void SensorProcessor::process(const RawSensorData& raw, bool isConnected, ProcessedSensorData& outData) {
+    lastRawData = raw;
+
     outData.is_connected = isConnected;
     outData.raw_tr = raw.top_right;
     outData.raw_br = raw.bottom_right;

@@ -14,6 +14,7 @@ public:
 
 private:
     RawSensorData tareOffset;
+    RawSensorData lastRawData;
     float deadzone;
 
     // 移動平均用バッファ
