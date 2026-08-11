@@ -47,6 +47,7 @@ class SerialService {
             contents = contents.substring(index + 1);
 
             if (line.isNotEmpty) {
+              print('[SERIAL RX] $line');
               _dataController.add(line);
             }
           }
