@@ -31,7 +31,7 @@ void wiimoteSetLogLevel(uint8_t level) {
 }
 
 void wiimoteLogVPrint(uint8_t level, const char *prefix, const char *format, va_list args) {
-    if (format == nullptr || prefix == nullptr || level > gWiimoteLogLevel) {
+    if (gWiimoteLogLevel == 0 || format == nullptr || prefix == nullptr || level > gWiimoteLogLevel) {
         return;
     }
 

@@ -13,10 +13,9 @@ bool WiiBalanceBoard::begin() {
     connected = false;
     state = WiiState::DISCONNECTED;
 
-    Serial.println("[WiiBalanceBoard] ESP32Wiimote 初期化開始...");
+    wiimoteSetLogLevel(0); // ライブラリ側のデバッグログ出力を無効化
     wiimote.init();
     wiimote.startDiscovery();
-    Serial.println("[WiiBalanceBoard] スキャンを開始しました。Wii Balance BoardのSYNCボタンを押してください...");
     return true;
 }
 
@@ -28,7 +27,6 @@ void WiiBalanceBoard::update() {
         connected = isConn;
         if (connected) {
             state = WiiState::CONNECTED;
-            Serial.println("[WiiBalanceBoard] ★ Wii Balance Board 接続完了! 初期化・解除コマンド送信... ★");
             wiimote.setLeds(0x01);
             
             // Extension 暗号化解除レジスタ初期化 (0x55 -> 0xA400F0, 0x00 -> 0xA400FB)
@@ -43,20 +41,12 @@ void WiiBalanceBoard::update() {
             wiimote.setReportingMode((ReportingMode)0x32, true);
         } else {
             state = WiiState::DISCONNECTED;
-            Serial.println("[WiiBalanceBoard] 切断されました。再スキャンします...");
             wiimote.startDiscovery();
         }
     }
 
-    // tinyWiimoteRead() を直接呼び出し（WiimoteDataParser によるデータ消費を回避）
     while (tinyWiimoteAvailable() > 0) {
         TinyWiimoteData report = tinyWiimoteRead();
-        Serial.printf("[RAW REPORT] (ID: 0x%02X, len: %d): ", report.data[1], report.len);
-        for (int i = 0; i < report.len && i < 16; i++) {
-            Serial.printf("%02X ", report.data[i]);
-        }
-        Serial.println();
-
         parseReport(report.data, report.len);
     }
 }
