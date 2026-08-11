@@ -61,7 +61,7 @@ class GamepadProvider extends ChangeNotifier {
 
       _dataSubscription?.cancel();
       _dataSubscription = _serialService.dataStream.listen((rawJson) {
-        print('[PROVIDER RX] Parsing: $rawJson');
+        debugPrint('[PROVIDER RX] Parsing: $rawJson');
         _currentData = SensorData.fromRawString(rawJson);
         notifyListeners();
       });

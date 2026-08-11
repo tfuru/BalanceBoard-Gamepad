@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 
 class SerialService {
@@ -31,7 +31,14 @@ class SerialService {
         return false;
       }
 
-      port.config.baudRate = baudRate;
+      final config = port.config;
+      config.baudRate = baudRate;
+      config.bits = 8;
+      config.stopBits = 1;
+      config.parity = SerialPortParity.none;
+      config.setFlowControl(SerialPortFlowControl.none);
+      port.config = config;
+
       _port = port;
 
       _reader = SerialPortReader(_port!);
@@ -47,7 +54,7 @@ class SerialService {
             contents = contents.substring(index + 1);
 
             if (line.isNotEmpty) {
-              print('[SERIAL RX] $line');
+              debugPrint('[SERIAL RX] $line');
               _dataController.add(line);
             }
           }
