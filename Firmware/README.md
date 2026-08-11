@@ -1,6 +1,6 @@
 # BalanceBoard-Gamepad ファームウェア
 
-Wii Balance Board と Bluetooth Classic 通信を行い、入力値を PC 向けのゲームパッド信号（USB HID 等）に変換して出力する ESP-WROOM-32 (Adafruit HUZZAH32) 用ファームウェアです。
+Wii Balance Board と Bluetooth Classic 通信を行い、取得したセンサー・重心データを USB シリアル通信 (115200bps / JSON) 経由で PC の **常駐中継アプリ (App)** へ送信する ESP-WROOM-32 (Adafruit HUZZAH32) 用ファームウェアです。
 
 ---
 
@@ -29,19 +29,26 @@ Wii Balance Board と Bluetooth Classic 通信を行い、入力値を PC 向け
 
 ---
 
-## 📁 ディレクトリ構造 (予定)
+## 📁 ディレクトリ構造
 
 ```text
 Firmware/
 ├── Makefile          # PlatformIO 操作用 Makefile
 ├── README.md         # ファームウェアドキュメント
-├── platformio.ini    # PlatformIO 設定ファイル
+├── platformio.ini    # PlatformIO 設定ファイル (`featheresp32`)
 └── src/              # ソースコード
-    └── main.cpp      # メインプログラム
+    ├── config.h             # 共通設定・定数
+    ├── main.cpp            # メインプログラム
+    ├── sensor_processor.cpp # 重心計算・フィルター処理
+    ├── sensor_processor.h   # 重心計算ヘッダー
+    ├── serial_protocol.cpp  # JSONシリアル通信プロトコル
+    ├── serial_protocol.h    # シリアル通信ヘッダー
+    ├── wii_balance_board.cpp# Wii Balance Board 接続処理
+    └── wii_balance_board.h  # Wii Balance Board ヘッダー
 ```
 
 ---
 
 ## 🔗 関連ドキュメント
 - [ルート README](../README.md)
-- [設定アプリ README](../App/README.md)
+- [常駐中継アプリ README](../App/README.md)

@@ -1,8 +1,8 @@
 # BalanceBoard-Gamepad 🎮
 
-Wii Balance Board と ESP-WROOM-32 (Adafruit HUZZAH32) を使用した、体感型アナログゲームパッド化プロジェクトです。
+Wii Balance Board と ESP-WROOM-32 (Adafruit HUZZAH32)、および **PC 常駐中継アプリ (Flutter)** を使用した、体感型アナログゲームパッド化プロジェクトです。
 
-Wii Balance Board の4隅に搭載されている圧力・重量センサーの値を ESP32 で取得し、PC 向けのゲームパッド（アナログ入力）として認識させることができます。
+Wii Balance Board の4隅に搭載されている圧力・重量センサーの値を ESP32 で取得し、USB シリアル通信経由で PC の常駐中継アプリへ送信。常駐中継アプリが PC ゲーム向けの仮想ゲームパッド（アナログ入力）として認識・入力中継します。
 
 ---
 
@@ -11,8 +11,8 @@ Wii Balance Board の4隅に搭載されている圧力・重量センサーの�
 ```mermaid
 flowchart LR
     WBB["Wii Balance Board\n(圧力センサー ×4)"] -- Bluetooth Classic --> ESP["ESP-WROOM-32\n(HUZZAH32)"]
-    ESP -- USB (HID/Gamepad) --> PC["PC / ゲーム機"]
-    PC <--> App["設定アプリ\n(App)"]
+    ESP -- USB Serial (115200bps / JSON) --> App["PC 常駐中継アプリ\n(Flutter)"]
+    App -- 仮想 Gamepad API (XInput / DirectInput) --> Game["PC ゲーム"]
 ```
 
 ---
@@ -21,7 +21,7 @@ flowchart LR
 
 - **体感型アナログ制御**: Wii Balance Board 上での体重移動（前・後・左・右・重心位置）をゲームパッドのアナログ入力（X/Y軸等）にマッピング。
 - **簡単ビルド・書き込み (PlatformIO + Make)**: `make build` や `make upload` などのシンプルな Make コマンドでファームウェアの開発・管理が可能。
-- **設定アプリ連携**: 重心のリアルタイムモニタリング、感度・デッドゾーン・キャリブレーションの調整をアプリで実施可能。
+- **PC 常駐中継アプリ連携**: タスクトレイに常駐し、リアルタイムでゲームパッド入力へ中継。重心モニタリング、感度・デッドゾーン・キャリブレーションの調整を GUI で実施可能。
 
 ---
 
@@ -38,7 +38,7 @@ flowchart LR
 ## 🛠 開発・動作環境
 
 - **ファームウェア**: [PlatformIO Core (CLI)](https://docs.platformio.org/) / `make`
-- **PC設定アプリ**: [Flutter](https://flutter.dev/) (macOS / Windows / Linux デスクトップ対応)
+- **PC 常駐中継アプリ**: [Flutter](https://flutter.dev/) (macOS / Windows / Linux デスクトップ対応)
 
 ---
 
@@ -79,12 +79,12 @@ BalanceBoard-Gamepad/
 │   ├── Makefile            # PlatformIO 操作用 Makefile
 │   ├── README.md           # ファームウェア詳細ドキュメント
 │   └── ...
-└── App/                    # PC用設定アプリケーション
-    ├── README.md           # 設定アプリ詳細ドキュメント
+└── App/                    # PC常駐中継アプリケーション (Flutter)
+    ├── README.md           # 常駐中継アプリ詳細ドキュメント
     └── ...
 ```
 
-- 各コンポーネントの詳細は [ファームウェア README](./Firmware/README.md) および [設定アプリ README](./App/README.md) を参照してください。
+- 各コンポーネントの詳細は [ファームウェア README](./Firmware/README.md) および [常駐中継アプリ README](./App/README.md) を参照してください。
 
 ---
 
