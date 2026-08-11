@@ -28,8 +28,18 @@ void WiiBalanceBoard::update() {
         connected = isConn;
         if (connected) {
             state = WiiState::CONNECTED;
-            Serial.println("[WiiBalanceBoard] ★ Wii Balance Board 接続完了! LED1点灯 & モード0x32送信 ★");
+            Serial.println("[WiiBalanceBoard] ★ Wii Balance Board 接続完了! 初期化・解除コマンド送信... ★");
             wiimote.setLeds(0x01);
+            
+            // Extension 暗号化解除レジスタ初期化 (0x55 -> 0xA400F0, 0x00 -> 0xA400FB)
+            uint8_t unencrypt1 = 0x55;
+            wiimote.writeMemory(0x04, 0xA400F0, &unencrypt1, 1);
+            delay(20);
+            uint8_t unencrypt2 = 0x00;
+            wiimote.writeMemory(0x04, 0xA400FB, &unencrypt2, 1);
+            delay(20);
+            
+            // モード 0x32 (CoreButtonsExT8) 要求
             wiimote.setReportingMode((ReportingMode)0x32, true);
         } else {
             state = WiiState::DISCONNECTED;
@@ -40,6 +50,12 @@ void WiiBalanceBoard::update() {
 
     if (wiimote.available()) {
         TinyWiimoteData report = tinyWiimoteRead();
+        Serial.printf("[RAW REPORT] (ID: 0x%02X, len: %d): ", report.data[1], report.len);
+        for (int i = 0; i < report.len && i < 16; i++) {
+            Serial.printf("%02X ", report.data[i]);
+        }
+        Serial.println();
+
         parseReport(report.data, report.len);
     }
 }
@@ -49,10 +65,10 @@ void WiiBalanceBoard::parseReport(const uint8_t* payload, size_t length) {
 
     uint8_t reportId = payload[1];
 
-    // Report 0x32 または 0x34, 0x35 (拡張データを含むレポート)
+    // 拡張データを含むレポート ID: 0x32, 0x34, 0x35
     if (reportId == 0x32 || reportId == 0x34 || reportId == 0x35) {
         if (length >= 12) {
-            // Extensionデータは offset 4 から始まります (8バイト)
+            // Extension データは payload[4] 以降 8 バイト
             const uint8_t* ext = &payload[4];
 
             rawData.top_right    = (ext[0] << 8) | ext[1];
@@ -60,8 +76,6 @@ void WiiBalanceBoard::parseReport(const uint8_t* payload, size_t length) {
             rawData.top_left     = (ext[4] << 8) | ext[5];
             rawData.bottom_left  = (ext[6] << 8) | ext[7];
         }
-    } else {
-        Serial.printf("[WiiBalanceBoard] その他のレポート受信 (ID: 0x%02X, 長さ: %d)\n", reportId, (int)length);
     }
 }
 
