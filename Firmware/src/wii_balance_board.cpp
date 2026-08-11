@@ -34,10 +34,10 @@ void WiiBalanceBoard::update() {
             // Extension 暗号化解除レジスタ初期化 (0x55 -> 0xA400F0, 0x00 -> 0xA400FB)
             uint8_t unencrypt1 = 0x55;
             wiimote.writeMemory(0x04, 0xA400F0, &unencrypt1, 1);
-            delay(20);
+            delay(50);
             uint8_t unencrypt2 = 0x00;
             wiimote.writeMemory(0x04, 0xA400FB, &unencrypt2, 1);
-            delay(20);
+            delay(50);
             
             // モード 0x32 (CoreButtonsExT8) 要求
             wiimote.setReportingMode((ReportingMode)0x32, true);
@@ -48,7 +48,8 @@ void WiiBalanceBoard::update() {
         }
     }
 
-    if (wiimote.available()) {
+    // tinyWiimoteRead() を直接呼び出し（WiimoteDataParser によるデータ消費を回避）
+    while (tinyWiimoteAvailable() > 0) {
         TinyWiimoteData report = tinyWiimoteRead();
         Serial.printf("[RAW REPORT] (ID: 0x%02X, len: %d): ", report.data[1], report.len);
         for (int i = 0; i < report.len && i < 16; i++) {
