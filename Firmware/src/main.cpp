@@ -28,6 +28,8 @@ void loop() {
         ProcessedSensorData processed;
 
         sensorProcessor.process(raw, connected, processed);
-        serialProtocol.sendTelemetry(processed);
+        if (connected) {
+            serialProtocol.sendTelemetry(processed);
+        }
     }
 }
