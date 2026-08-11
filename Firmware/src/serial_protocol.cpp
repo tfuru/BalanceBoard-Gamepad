@@ -43,6 +43,7 @@ void SerialProtocol::handleCommand(const String& jsonString) {
     const char* cmd = doc["cmd"];
     if (cmd != nullptr) {
         if (strcmp(cmd, "tare") == 0) {
+            // raw値付きsetTareを処理
             sensorProcessor.setTare();
         } else if (strcmp(cmd, "reset_tare") == 0) {
             sensorProcessor.resetTare();

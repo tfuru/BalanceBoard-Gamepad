@@ -8,6 +8,7 @@ public:
     SensorProcessor();
 
     void process(const RawSensorData& raw, bool isConnected, ProcessedSensorData& outData);
+    void setTare(const RawSensorData& raw);
     void setTare();
     void resetTare();
 

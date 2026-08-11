@@ -10,8 +10,12 @@ SensorProcessor::SensorProcessor()
     }
 }
 
+void SensorProcessor::setTare(const RawSensorData& raw) {
+    tareOffset = raw;
+}
+
 void SensorProcessor::setTare() {
-    // 現在の最新値を Tare (風袋引き) オフセットとして保存
+    // raw値未指定時は処理をスキップ
 }
 
 void SensorProcessor::resetTare() {
