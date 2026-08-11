@@ -1,0 +1,40 @@
+# macOS / OS generated files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# IDE & Editor files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+*.swp
+*~
+
+# PlatformIO / Firmware
+.pio/
+.pioenvs/
+.piolibdeps/
+*.elf
+*.bin
+*.hex
+
+# Flutter & Dart / App
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+ephemeral/
+
+# Flutter Desktop generated files
+App/build/
+App/macos/Flutter/ephemeral/
+App/windows/flutter/ephemeral/
+App/linux/flutter/ephemeral/
+
+# Environment / Secrets
+.env
+.env.*
