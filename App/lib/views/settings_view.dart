@@ -122,6 +122,27 @@ class _SettingsViewState extends State<SettingsView> {
                       'WASD キーボード設定',
                       style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF332A15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFF59E0B)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.accessibility_new, color: Color(0xFFF59E0B), size: 20),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'macOS で他のアプリに WASD キーを送るには「システム設定 > プライバシーとセキュリティ > アクセシビリティ」で権限を許可する必要があります。',
+                              style: TextStyle(color: Color(0xFFFDE68A), fontSize: 11),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -163,6 +184,7 @@ class _SettingsViewState extends State<SettingsView> {
             ),
             const SizedBox(height: 12),
           ],
+
 
           // OSC 詳細設定 Card
           if (provider.config.outputMode == OutputMode.oscInputController) ...[

@@ -27,6 +27,9 @@ class KeyboardService {
   DynamicLibrary? _user32Lib;
   void Function(int, int, int, Pointer<Void>)? _keybdEvent;
 
+  // macOS Accessibility Permission check
+  bool Function()? _axIsProcessTrusted;
+
   KeyboardService() {
     _initFfi();
   }
@@ -47,6 +50,14 @@ class KeyboardService {
         _cfRelease = _cgLib!
             .lookup<NativeFunction<Void Function(Pointer<Void>)>>('CFRelease')
             .asFunction();
+
+        try {
+          _axIsProcessTrusted = _cgLib!
+              .lookup<NativeFunction<Bool Function()>>('AXIsProcessTrusted')
+              .asFunction();
+        } catch (_) {}
+
+        checkAccessibilityPermission();
       } else if (Platform.isWindows) {
         _user32Lib = DynamicLibrary.open('user32.dll');
 
@@ -58,6 +69,21 @@ class KeyboardService {
       debugPrint('[KeyboardService] FFI 初期化エラー: $e');
     }
   }
+
+  /// macOS アクセシビリティ権限のチェック
+  bool checkAccessibilityPermission() {
+    if (Platform.isMacOS && _axIsProcessTrusted != null) {
+      bool isTrusted = _axIsProcessTrusted!();
+      if (!isTrusted) {
+        debugPrint('[KeyboardService] ⚠️ WARNING: macOS アクセシビリティ権限が許可されていません！「システム設定 > プライバシーとセキュリティ > アクセシビリティ」でアプリ（または実行元ターミナル/IDE）を許可してください。');
+      } else {
+        debugPrint('[KeyboardService] ✅ macOS アクセシビリティ権限の確認完了 (Trusted)');
+      }
+      return isTrusted;
+    }
+    return true;
+  }
+
 
   /// WASD キーの押し下げ / 離脱を状態管理して送信
   void updateKeyStates({
