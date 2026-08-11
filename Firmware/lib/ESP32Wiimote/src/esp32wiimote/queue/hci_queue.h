@@ -1,0 +1,93 @@
+// Copyright (c) 2020 Daiki Yasuda
+//
+// This is licensed under
+// - Creative Commons Attribution-NonCommercial 3.0 Unported
+// - https://creativecommons.org/licenses/by-nc/3.0/
+// - Or see LICENSE.md
+
+#ifndef ESP32_WIIMOTE_HCI_QUEUE_H
+#define ESP32_WIIMOTE_HCI_QUEUE_H
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+
+#include <stddef.h>
+#include <stdint.h>
+
+/**
+ * HCI Queue Data Structure
+ */
+struct HciQueueData {
+    size_t len;
+    uint8_t data[];
+};
+
+/**
+ * HCI Queue Manager - Handles TX/RX queues for HCI packets
+ */
+class HciQueueManager {
+   public:
+    HciQueueManager(size_t rxQueueSize = 32, size_t txQueueSize = 32);
+
+    /**
+     * Create and initialize the TX and RX queues
+     * @return true if queues created successfully, false otherwise
+     */
+    bool createQueues();
+
+    /**
+     * Send data to TX queue (for outgoing packets)
+     * @param data Pointer to packet data
+     * @param len Length of packet
+     * @return true if successful, false otherwise
+     */
+    bool sendToTxQueue(uint8_t *data, size_t len);
+
+    /**
+     * Send data to RX queue (for incoming packets)
+     * @param data Pointer to packet data
+     * @param len Length of packet
+     * @return true if successful, false otherwise
+     */
+    bool sendToRxQueue(uint8_t *data, size_t len);
+
+    /**
+     * Process TX queue - sends queued packets if possible
+     * Must be called from main task
+     */
+    void processTxQueue();
+
+    /**
+     * Process RX queue - handles received packets
+     * Must be called from main task
+     */
+    void processRxQueue();
+
+    /**
+     * Check if TX queue has pending packets
+     */
+    bool hasTxPending() const;
+
+    /**
+     * Check if RX queue has pending packets
+     */
+    bool hasRxPending() const;
+
+   private:
+    /**
+     * Internal helper to enqueue data to a specified queue
+     * @param queue Target queue handle
+     * @param data Pointer to packet data
+     * @param len Length of packet
+     * @param debugLabel Debug label for verbose logging
+     * @return true if successful, false otherwise
+     */
+    static bool sendToQueue(xQueueHandle queue, uint8_t *data, size_t len, const char *debugLabel);
+
+    xQueueHandle txQueue_;
+    xQueueHandle rxQueue_;
+    size_t rxQueueSize_;
+    size_t txQueueSize_;
+};
+
+#endif  // ESP32_WIIMOTE_HCI_QUEUE_H

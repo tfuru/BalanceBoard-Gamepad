@@ -1,0 +1,21 @@
+{
+  "C_Cpp.default.configurationProvider": "platformio.platformio-ide",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/compile_commands.json",
+  "C_Cpp.default.cStandard": "c11",
+  "C_Cpp.default.cppStandard": "c++11",
+  "files.associations": {
+    "*.ino": "cpp"
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "ms-vscode.cpptools",
+  "C_Cpp.clang_format_style": "file",
+  "C_Cpp.clang_format_fallbackStyle": "Google",
+  "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+  "C_Cpp.codeAnalysis.clangTidy.useBuildPath": true,
+  "C_Cpp.codeAnalysis.clangTidy.headerFilter": "^${workspaceFolder}/(src|test|examples)/",
+  "C_Cpp.codeAnalysis.exclude": {
+    "**/.pio/**": true,
+    "**/.platformio/**": true
+  },
+  "C_Cpp.codeAnalysis.runAutomatically": true
+}

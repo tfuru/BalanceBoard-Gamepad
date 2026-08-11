@@ -1,0 +1,80 @@
+# clang-tidy configuration for ESP32Wiimote
+# Targets C++11, Arduino/ESP32 embedded environment
+
+Checks: >
+  clang-analyzer-*,
+  bugprone-*,
+  readability-*,
+  modernize-use-nullptr,
+  modernize-use-override,
+  modernize-use-default-member-init,
+  modernize-redundant-void-arg,
+  modernize-loop-convert,
+  -readability-convert-member-functions-to-static,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -readability-function-cognitive-complexity,
+  -bugprone-easily-swappable-parameters,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling
+
+# Treat warnings as errors only for the most critical checks
+WarningsAsErrors: >
+  clang-analyzer-core.NullDereference,
+  clang-analyzer-core.uninitialized.*,
+  bugprone-use-after-move,
+  bugprone-infinite-loop
+
+CheckOptions:
+  # Naming convention for automated refactors.
+  # - Types: PascalCase
+  # - Functions/methods/variables/parameters: camelBack
+  # - Private members: camelBack with trailing underscore
+  # - Macros/constants: UPPER_CASE (legacy macros remain valid)
+  - key: readability-identifier-naming.TypeAliasCase
+    value: lower_case
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack
+  - key: readability-identifier-naming.PublicMethodCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMethodCase
+    value: camelBack
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.MemberCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.ConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstantPrefix
+    value: 'k'
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: 'k'
+  # Loop convert: only suggest range-for when the loop variable is used as iterator
+  - key: modernize-loop-convert.MinConfidence
+    value: reasonable
+
+# Report diagnostics only for workspace headers that belong to user code.
+HeaderFilterRegex: '^.*/(src|examples|test/(?!mocks/)).*\.(h|hpp)$'
