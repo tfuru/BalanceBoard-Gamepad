@@ -28,8 +28,9 @@ void WiiBalanceBoard::update() {
         connected = isConn;
         if (connected) {
             state = WiiState::CONNECTED;
-            Serial.println("[WiiBalanceBoard] ★ Wii Balance Board 接続完了! データ受信を開始します ★");
-            wiimote.setReportingMode(ReportingMode::CoreButtonsAccelExt, true);
+            Serial.println("[WiiBalanceBoard] ★ Wii Balance Board 接続完了! LED1点灯 & モード0x32送信 ★");
+            wiimote.setLeds(0x01);
+            wiimote.setReportingMode((ReportingMode)0x32, true);
         } else {
             state = WiiState::DISCONNECTED;
             Serial.println("[WiiBalanceBoard] 切断されました。再スキャンします...");
@@ -39,20 +40,29 @@ void WiiBalanceBoard::update() {
 
     if (wiimote.available()) {
         TinyWiimoteData report = tinyWiimoteRead();
-        if (report.len >= 8) {
-            parseReport(report.data, report.len);
-        }
+        parseReport(report.data, report.len);
     }
 }
 
 void WiiBalanceBoard::parseReport(const uint8_t* payload, size_t length) {
-    if (length < 8 || payload == nullptr) return;
+    if (length < 4 || payload == nullptr) return;
 
-    // Wii Balance Board 4隅の圧力データ (16-bit Big Endian)
-    rawData.top_right    = (payload[0] << 8) | payload[1];
-    rawData.bottom_right = (payload[2] << 8) | payload[3];
-    rawData.top_left     = (payload[4] << 8) | payload[5];
-    rawData.bottom_left  = (payload[6] << 8) | payload[7];
+    uint8_t reportId = payload[1];
+
+    // Report 0x32 または 0x34, 0x35 (拡張データを含むレポート)
+    if (reportId == 0x32 || reportId == 0x34 || reportId == 0x35) {
+        if (length >= 12) {
+            // Extensionデータは offset 4 から始まります (8バイト)
+            const uint8_t* ext = &payload[4];
+
+            rawData.top_right    = (ext[0] << 8) | ext[1];
+            rawData.bottom_right = (ext[2] << 8) | ext[3];
+            rawData.top_left     = (ext[4] << 8) | ext[5];
+            rawData.bottom_left  = (ext[6] << 8) | ext[7];
+        }
+    } else {
+        Serial.printf("[WiiBalanceBoard] その他のレポート受信 (ID: 0x%02X, 長さ: %d)\n", reportId, (int)length);
+    }
 }
 
 bool WiiBalanceBoard::isConnected() const {
