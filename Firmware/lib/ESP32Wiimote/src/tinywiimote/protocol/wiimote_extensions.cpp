@@ -56,9 +56,10 @@ void WiimoteExtensions::handleReport(uint16_t ch, uint8_t *data, uint16_t len) {
                                          (const uint8_t[]){0x55}, 1);
                     controllerReportState_ = ControllerReportState::WaitAckOutReport;
                 } else {
-                    LOG_INFO("Extension controller NOT connected\n");
+                    LOG_INFO("Extension controller NOT connected, but Balance Board uses Report 0x32\n");
                     state_->setNunchukConnected(false);
-                    setDefaultReportingMode(&protocol, state_, ch);
+                    WiimoteReportingModeCommand reportingModeCommand = {0x32, false};
+                    protocol.setReportingMode(ch, reportingModeCommand);
                 }
             }
             break;
