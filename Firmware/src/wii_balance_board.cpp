@@ -21,24 +21,26 @@ bool WiiBalanceBoard::begin() {
     connected = false;
     state = WiiState::DISCONNECTED;
 
-    // ESP32 Bluetooth Controller 初期化 (Arduino HAL btStart() 使用)
+    Serial.println("[WiiBalanceBoard] Bluetooth 初期化処理を開始中...");
+
+    // ESP32 Bluetooth Controller 初期化
     if (!btStarted()) {
         if (!btStart()) {
-            ESP_LOGE(TAG, "btStart 失敗");
+            Serial.println("[WiiBalanceBoard] エラー: btStart 失敗");
             return false;
         }
     }
 
     if (esp_bluedroid_get_status() == ESP_BLUEDROID_STATUS_UNINITIALIZED) {
         if (esp_bluedroid_init() != ESP_OK) {
-            ESP_LOGE(TAG, "esp_bluedroid_init 失敗");
+            Serial.println("[WiiBalanceBoard] エラー: esp_bluedroid_init 失敗");
             return false;
         }
     }
 
     if (esp_bluedroid_get_status() != ESP_BLUEDROID_STATUS_ENABLED) {
         if (esp_bluedroid_enable() != ESP_OK) {
-            ESP_LOGE(TAG, "esp_bluedroid_enable 失敗");
+            Serial.println("[WiiBalanceBoard] エラー: esp_bluedroid_enable 失敗");
             return false;
         }
     }
@@ -47,7 +49,7 @@ bool WiiBalanceBoard::begin() {
     esp_bt_gap_register_callback(gapCallback);
     esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
 
-    ESP_LOGI(TAG, "Bluetooth Classic 初期化成功。Balance Board スキャンを開始します...");
+    Serial.println("[WiiBalanceBoard] Bluetooth Classic 初期化成功。Balance Board スキャンを開始します...");
     startDiscovery();
     return true;
 }
@@ -55,6 +57,7 @@ bool WiiBalanceBoard::begin() {
 void WiiBalanceBoard::startDiscovery() {
     state = WiiState::SCANNING;
     lastDiscoveryTime = millis();
+    Serial.println("[WiiBalanceBoard] デバイススキャン実行中 (10秒間)...");
     esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
 }
 
@@ -78,8 +81,10 @@ void WiiBalanceBoard::handleGapCallback(esp_bt_gap_cb_event_t event, esp_bt_gap_
                     memcpy(devName, param->disc_res.prop[i].val, len);
                     devName[len] = '\0';
 
-                    if (strstr(devName, "RVL-WBC-01") != nullptr || strstr(devName, "Nintendo") != nullptr) {
-                        ESP_LOGI(TAG, "Wii Balance Board 発見: %s", devName);
+                    Serial.printf("[WiiBalanceBoard] 検出機器: %s\n", devName);
+
+                    if (strstr(devName, "RVL-WBC-01") != nullptr || strstr(devName, "Nintendo") != nullptr || strstr(devName, "Wii") != nullptr) {
+                        Serial.printf("[WiiBalanceBoard] ★ Wii Balance Board 発見: %s ★\n", devName);
                         memcpy(targetAddress, param->disc_res.bda, sizeof(esp_bd_addr_t));
                         hasTargetAddress = true;
                         state = WiiState::CONNECTING;
@@ -97,7 +102,7 @@ void WiiBalanceBoard::handleGapCallback(esp_bt_gap_cb_event_t event, esp_bt_gap_
         case ESP_BT_GAP_DISC_STATE_CHANGED_EVT: {
             if (param->disc_st_chg.state == ESP_BT_GAP_DISCOVERY_STOPPED) {
                 if (!connected && state == WiiState::SCANNING) {
-                    ESP_LOGI(TAG, "スキャン終了。再試行中...");
+                    Serial.println("[WiiBalanceBoard] スキャン終了。12秒後に再試行中...");
                 }
             }
             break;
