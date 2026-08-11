@@ -1,6 +1,7 @@
 enum OutputMode {
   virtualGamepad,
   oscInputController,
+  keyboardWasd,
   none,
 }
 
@@ -11,6 +12,8 @@ extension OutputModeExtension on OutputMode {
         return '仮想ゲームパッド';
       case OutputMode.oscInputController:
         return 'OSC as Input Controller';
+      case OutputMode.keyboardWasd:
+        return 'WASD キーボード';
       case OutputMode.none:
         return '出力 OFF';
     }
@@ -31,6 +34,11 @@ class AppConfig {
   bool invertOscX;
   bool invertOscY;
 
+  // WASD モード設定
+  double wasdThreshold;
+  bool invertWasdX;
+  bool invertWasdY;
+
   AppConfig({
     this.selectedPort = '',
     this.baudRate = 115200,
@@ -42,6 +50,10 @@ class AppConfig {
     this.oscPort = 9000,
     this.invertOscX = false,
     this.invertOscY = false,
+    this.wasdThreshold = 0.15,
+    this.invertWasdX = false,
+    this.invertWasdY = false,
   });
 }
+
 

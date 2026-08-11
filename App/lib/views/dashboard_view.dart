@@ -141,9 +141,12 @@ class DashboardView extends StatelessWidget {
                                     fontWeight: FontWeight.bold,
                                     color: mode == OutputMode.oscInputController
                                         ? const Color(0xFF10B981)
-                                        : (mode == OutputMode.virtualGamepad
-                                            ? const Color(0xFF38BDF8)
-                                            : Colors.white54),
+                                        : (mode == OutputMode.keyboardWasd
+                                            ? const Color(0xFFF59E0B)
+                                            : (mode == OutputMode.virtualGamepad
+                                                ? const Color(0xFF38BDF8)
+                                                : Colors.white54)),
+
                                   ),
                                 ),
                               );

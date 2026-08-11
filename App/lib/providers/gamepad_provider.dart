@@ -5,9 +5,12 @@ import '../models/app_config.dart';
 import '../services/serial_service.dart';
 import '../services/osc_service.dart';
 
+import '../services/keyboard_service.dart';
+
 class GamepadProvider extends ChangeNotifier {
   final SerialService _serialService = SerialService();
   late final OscService _oscService;
+  late final KeyboardService _keyboardService;
   StreamSubscription<String>? _dataSubscription;
 
   SensorData _currentData = const SensorData();
@@ -21,9 +24,11 @@ class GamepadProvider extends ChangeNotifier {
   List<String> get availablePorts => _availablePorts;
   bool get isSerialConnected => _isSerialConnected;
   String get statusMessage => _statusMessage;
+  KeyboardService get keyboardService => _keyboardService;
 
   GamepadProvider() {
     _oscService = OscService(host: _config.oscHost, port: _config.oscPort);
+    _keyboardService = KeyboardService();
     refreshPorts();
   }
 
@@ -51,6 +56,9 @@ class GamepadProvider extends ChangeNotifier {
   }
 
   void setOutputMode(OutputMode mode) {
+    if (_config.outputMode == OutputMode.keyboardWasd && mode != OutputMode.keyboardWasd) {
+      _keyboardService.releaseAllKeys();
+    }
     _config.outputMode = mode;
     notifyListeners();
   }
@@ -74,6 +82,21 @@ class GamepadProvider extends ChangeNotifier {
 
   void setInvertOscY(bool invert) {
     _config.invertOscY = invert;
+    notifyListeners();
+  }
+
+  void setWasdThreshold(double value) {
+    _config.wasdThreshold = value;
+    notifyListeners();
+  }
+
+  void setInvertWasdX(bool invert) {
+    _config.invertWasdX = invert;
+    notifyListeners();
+  }
+
+  void setInvertWasdY(bool invert) {
+    _config.invertWasdY = invert;
     notifyListeners();
   }
 
@@ -109,15 +132,18 @@ class GamepadProvider extends ChangeNotifier {
   void _handleDataOutput(SensorData data) {
     switch (_config.outputMode) {
       case OutputMode.oscInputController:
-        // OSC as Input Controller モードが ON の場合、仮想ゲームパッド出力を OFF にして OSC 送信
+        _keyboardService.releaseAllKeys();
         _sendOscInput(data);
         break;
       case OutputMode.virtualGamepad:
-        // 仮想ゲームパッド モード (OSC 送信は停止)
+        _keyboardService.releaseAllKeys();
         _relayVirtualGamepad(data);
         break;
+      case OutputMode.keyboardWasd:
+        _sendWasdInput(data);
+        break;
       case OutputMode.none:
-        // 出力 OFF
+        _keyboardService.releaseAllKeys();
         break;
     }
   }
@@ -148,15 +174,34 @@ class GamepadProvider extends ChangeNotifier {
     _oscService.sendFloat('/input/Vertical', y);
   }
 
-  /// 仮想ゲームパッド入力中継（OSC モード時は OFF）
+  /// WASD キーボード入力をエミュレート
+  void _sendWasdInput(SensorData data) {
+    double rawX = data.centerX;
+    double rawY = data.centerY;
+
+    if (_config.invertWasdX) rawX = -rawX;
+    if (_config.invertWasdY) rawY = -rawY;
+
+    double threshold = _config.wasdThreshold;
+
+    bool w = rawY > threshold;
+    bool s = rawY < -threshold;
+    bool d = rawX > threshold;
+    bool a = rawX < -threshold;
+
+    _keyboardService.updateKeyStates(w: w, a: a, s: s, d: d);
+  }
+
+  /// 仮想ゲームパッド入力中継（OSC / WASD モード時は OFF）
   void _relayVirtualGamepad(SensorData data) {
-    // 仮想ゲームパッド出力処理（現状は OSC モード ON 時に停止する構造）
+    // 仮想ゲームパッド出力処理
   }
 
   void disconnect() {
     _dataSubscription?.cancel();
     _dataSubscription = null;
     _serialService.disconnect();
+    _keyboardService.releaseAllKeys();
     _isSerialConnected = false;
     _currentData = const SensorData();
     _statusMessage = '切断完了';
@@ -174,7 +219,9 @@ class GamepadProvider extends ChangeNotifier {
     _dataSubscription?.cancel();
     _serialService.dispose();
     _oscService.dispose();
+    _keyboardService.dispose();
     super.dispose();
   }
 }
+
 

@@ -11,12 +11,15 @@ Wii Balance Board と ESP32 を組み合わせた BalanceBoard-Gamepad からの
    - 重心 (X, Y 軸) および重量データを PC の仮想コントローラー（XInput / DirectInput / OS Virtual Controller）としてゲームに中継。
 2. **OSC as Input Controller モード (VRChat 対応)**:
    - Wii Balance Board の重心移動データを VRChat 向けの OSC メッセージ (`/input/Horizontal`, `/input/Vertical`) として UDP 送信 (デフォルト: `127.0.0.1:9000`)。
-   - **OSC モードが ON の場合、仮想ゲームパッド出力は自動的に OFF に切り替わります（排他制御）。**
-3. **リアルタイムモニタリング GUI**:
+3. **WASD キーボードモード**:
+   - 重心移動（前後左右）が閾値を超えた場合に、PC 上で W, A, S, D キー入力（KeyDown/KeyUp）をエミュレート。
+   - キーボード操作専用の PC ゲームやシミュレーターに対応。
+   - **※ 各出力モード（仮想ゲームパッド / OSC / WASD）は互いに排他制御されます。**
+4. **リアルタイムモニタリング GUI**:
    - ウィンドウを開くことで、Wii Balance Board の4隅のセンサー値および重心位置を視覚的に表示 (`CustomPainter`)。
-4. **キャリブレーション & カスタマイズ**:
+5. **キャリブレーション & カスタマイズ**:
    - 零点補正 (Tare) リセットコマンドの送信。
-   - 感度・デッドゾーン・送信先 IP / ポート・軸反転の調整。
+   - 感度・デッドゾーン・WASD 反応閾値・送信先 IP / ポート・軸反転の調整。
 
 ---
 

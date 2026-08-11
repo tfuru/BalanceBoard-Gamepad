@@ -83,6 +83,16 @@ class _SettingsViewState extends State<SettingsView> {
                     },
                   ),
                   RadioListTile<OutputMode>(
+                    title: const Text('WASD キーボード (WASD Keyboard)', style: TextStyle(color: Colors.white)),
+                    subtitle: const Text('重心移動を W, A, S, D キーの押下に直接変換', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    value: OutputMode.keyboardWasd,
+                    groupValue: provider.config.outputMode,
+                    activeColor: const Color(0xFFF59E0B),
+                    onChanged: (val) {
+                      if (val != null) provider.setOutputMode(val);
+                    },
+                  ),
+                  RadioListTile<OutputMode>(
                     title: const Text('出力 OFF', style: TextStyle(color: Colors.white)),
                     subtitle: const Text('モニター画面のみ（入力中継なし）', style: TextStyle(color: Colors.white54, fontSize: 11)),
                     value: OutputMode.none,
@@ -97,6 +107,62 @@ class _SettingsViewState extends State<SettingsView> {
             ),
           ),
           const SizedBox(height: 12),
+
+          // WASD 詳細設定 Card
+          if (provider.config.outputMode == OutputMode.keyboardWasd) ...[
+            Card(
+              color: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'WASD キーボード設定',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'キー入力反応しきい値 (Threshold)',
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                        Text(
+                          provider.config.wasdThreshold.toStringAsFixed(2),
+                          style: const TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    Slider(
+                      value: provider.config.wasdThreshold,
+                      min: 0.05,
+                      max: 0.40,
+                      divisions: 35,
+                      activeColor: const Color(0xFFF59E0B),
+                      onChanged: (val) => provider.setWasdThreshold(val),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      title: const Text('A/D (左右) 反転', style: TextStyle(color: Colors.white)),
+                      value: provider.config.invertWasdX,
+                      activeColor: const Color(0xFFF59E0B),
+                      onChanged: (val) => provider.setInvertWasdX(val),
+                    ),
+                    SwitchListTile(
+                      title: const Text('W/S (前後) 反転', style: TextStyle(color: Colors.white)),
+                      value: provider.config.invertWasdY,
+                      activeColor: const Color(0xFFF59E0B),
+                      onChanged: (val) => provider.setInvertWasdY(val),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
 
           // OSC 詳細設定 Card
           if (provider.config.outputMode == OutputMode.oscInputController) ...[
