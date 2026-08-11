@@ -1,0 +1,86 @@
+name: Release App Build
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build App (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            artifact_name: balance_board_app-macos
+            target: macos
+          - os: windows-latest
+            artifact_name: balance_board_app-windows
+            target: windows
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+        working-directory: App
+
+      - name: Build macOS Application
+        if: matrix.target == 'macos'
+        run: flutter build macos --release
+        working-directory: App
+
+      - name: Package macOS Application
+        if: matrix.target == 'macos'
+        run: |
+          cd App/build/macos/Build/Products/Release
+          zip -r ../../../../../${{ matrix.artifact_name }}.zip balance_board_app.app
+
+      - name: Build Windows Application
+        if: matrix.target == 'windows'
+        run: flutter build windows --release
+        working-directory: App
+
+      - name: Package Windows Application
+        if: matrix.target == 'windows'
+        shell: powershell
+        run: |
+          Compress-Archive -Path App/build/windows/x64/runner/Release/* -DestinationPath ${{ matrix.artifact_name }}.zip
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}.zip
+          retention-days: 1
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: balance_board_app-*
+          merge-multiple: true
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: balance_board_app-*.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
