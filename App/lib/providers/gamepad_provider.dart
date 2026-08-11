@@ -26,6 +26,38 @@ class GamepadProvider extends ChangeNotifier {
   String get statusMessage => _statusMessage;
   KeyboardService get keyboardService => _keyboardService;
 
+  // モニタリング用のアクティブ出力計算値 Getter
+  double get activeOscX {
+    double rawX = _currentData.centerX;
+    double x = (rawX.abs() < _config.deadzone) ? 0.0 : rawX;
+    x *= _config.sensitivity;
+    x = x.clamp(-1.0, 1.0);
+    return _config.invertOscX ? -x : x;
+  }
+
+  double get activeOscY {
+    double rawY = _currentData.centerY;
+    double y = (rawY.abs() < _config.deadzone) ? 0.0 : rawY;
+    y *= _config.sensitivity;
+    y = y.clamp(-1.0, 1.0);
+    return _config.invertOscY ? -y : y;
+  }
+
+  double get activeGamepadX {
+    double rawX = _currentData.centerX;
+    double x = (rawX.abs() < _config.deadzone) ? 0.0 : rawX;
+    x *= _config.sensitivity;
+    return x.clamp(-1.0, 1.0);
+  }
+
+  double get activeGamepadY {
+    double rawY = _currentData.centerY;
+    double y = (rawY.abs() < _config.deadzone) ? 0.0 : rawY;
+    y *= _config.sensitivity;
+    return y.clamp(-1.0, 1.0);
+  }
+
+
   GamepadProvider() {
     _oscService = OscService(host: _config.oscHost, port: _config.oscPort);
     _keyboardService = KeyboardService();

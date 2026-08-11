@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import '../models/app_config.dart';
 import '../providers/gamepad_provider.dart';
 import 'components/cog_painter.dart';
+import 'components/output_status_card.dart';
 import 'help_view.dart';
 import 'settings_view.dart';
+
 
 
 class DashboardView extends StatelessWidget {
@@ -215,6 +217,10 @@ class DashboardView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
+            // リアルタイム出力確認モニター欄
+            const OutputStatusCard(),
+            const SizedBox(height: 16),
+
             // 下部 コントロールボタン (Tare リセット)
             SizedBox(
               width: double.infinity,
@@ -234,6 +240,7 @@ class DashboardView extends StatelessWidget {
                 onPressed: provider.isSerialConnected ? provider.sendTareCommand : null,
               ),
             ),
+
           ],
         ),
       ),
