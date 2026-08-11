@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/app_config.dart';
 import '../providers/gamepad_provider.dart';
 import 'components/cog_painter.dart';
 import 'help_view.dart';
 import 'settings_view.dart';
+
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
@@ -111,12 +113,48 @@ class DashboardView extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    'ステータス: ${provider.statusMessage}',
-                    style: TextStyle(
-                      color: provider.isSerialConnected ? const Color(0xFF10B981) : Colors.white60,
-                      fontSize: 12,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'ステータス: ${provider.statusMessage}',
+                        style: TextStyle(
+                          color: provider.isSerialConnected ? const Color(0xFF10B981) : Colors.white60,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          const Text('出力モード: ', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          DropdownButton<OutputMode>(
+                            dropdownColor: const Color(0xFF1E293B),
+                            value: provider.config.outputMode,
+                            underline: const SizedBox(),
+                            isDense: true,
+                            items: OutputMode.values.map((mode) {
+                              return DropdownMenuItem<OutputMode>(
+                                value: mode,
+                                child: Text(
+                                  mode.label,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: mode == OutputMode.oscInputController
+                                        ? const Color(0xFF10B981)
+                                        : (mode == OutputMode.virtualGamepad
+                                            ? const Color(0xFF38BDF8)
+                                            : Colors.white54),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (mode) {
+                              if (mode != null) provider.setOutputMode(mode);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),

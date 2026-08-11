@@ -9,12 +9,14 @@ Wii Balance Board と ESP32 を組み合わせた BalanceBoard-Gamepad からの
 1. **バックグラウンド中継 & 仮想ゲームパッド変換**:
    - タスクトレイ / メニューバーに常駐し、ESP32 からの USB シリアルデータを受信。
    - 重心 (X, Y 軸) および重量データを PC の仮想コントローラー（XInput / DirectInput / OS Virtual Controller）としてゲームに中継。
-2. **リアルタイムモニタリング GUI**:
+2. **OSC as Input Controller モード (VRChat 対応)**:
+   - Wii Balance Board の重心移動データを VRChat 向けの OSC メッセージ (`/input/Horizontal`, `/input/Vertical`) として UDP 送信 (デフォルト: `127.0.0.1:9000`)。
+   - **OSC モードが ON の場合、仮想ゲームパッド出力は自動的に OFF に切り替わります（排他制御）。**
+3. **リアルタイムモニタリング GUI**:
    - ウィンドウを開くことで、Wii Balance Board の4隅のセンサー値および重心位置を視覚的に表示 (`CustomPainter`)。
-3. **キャリブレーション & カスタマイズ**:
+4. **キャリブレーション & カスタマイズ**:
    - 零点補正 (Tare) リセットコマンドの送信。
-   - 感度・デッドゾーン・アナログ軸割り当ての調整。
-   - ゲームごとの設定プロファイル保存・自動切り替え。
+   - 感度・デッドゾーン・送信先 IP / ポート・軸反転の調整。
 
 ---
 

@@ -1,9 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/gamepad_provider.dart';
+import '../models/app_config.dart';
 
-class SettingsView extends StatelessWidget {
+
+class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
+
+  @override
+  State<SettingsView> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends State<SettingsView> {
+  late TextEditingController _hostController;
+  late TextEditingController _portController;
+
+  @override
+  void initState() {
+    super.initState();
+    final provider = Provider.of<GamepadProvider>(context, listen: false);
+    _hostController = TextEditingController(text: provider.config.oscHost);
+    _portController = TextEditingController(text: provider.config.oscPort.toString());
+  }
+
+  @override
+  void dispose() {
+    _hostController.dispose();
+    _portController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +43,137 @@ class SettingsView extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // 出力モード設定 Card
+          Card(
+            color: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '出力モード選択',
+                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    '※ OSC as Input Controller モードを ON にすると、仮想ゲームパッド出力は OFF になります。',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                  const SizedBox(height: 12),
+                  RadioListTile<OutputMode>(
+                    title: const Text('仮想ゲームパッド (Virtual Gamepad)', style: TextStyle(color: Colors.white)),
+                    subtitle: const Text('PC ゲーム用のゲームパッドとして入力中継', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    value: OutputMode.virtualGamepad,
+                    groupValue: provider.config.outputMode,
+                    activeColor: const Color(0xFF38BDF8),
+                    onChanged: (val) {
+                      if (val != null) provider.setOutputMode(val);
+                    },
+                  ),
+                  RadioListTile<OutputMode>(
+                    title: const Text('OSC as Input Controller (VRChat用)', style: TextStyle(color: Colors.white)),
+                    subtitle: const Text('VRChat (/input/Horizontal, /input/Vertical) へ UDP 送信', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    value: OutputMode.oscInputController,
+                    groupValue: provider.config.outputMode,
+                    activeColor: const Color(0xFF10B981),
+                    onChanged: (val) {
+                      if (val != null) provider.setOutputMode(val);
+                    },
+                  ),
+                  RadioListTile<OutputMode>(
+                    title: const Text('出力 OFF', style: TextStyle(color: Colors.white)),
+                    subtitle: const Text('モニター画面のみ（入力中継なし）', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    value: OutputMode.none,
+                    groupValue: provider.config.outputMode,
+                    activeColor: Colors.grey,
+                    onChanged: (val) {
+                      if (val != null) provider.setOutputMode(val);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // OSC 詳細設定 Card
+          if (provider.config.outputMode == OutputMode.oscInputController) ...[
+            Card(
+              color: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'OSC 送信設定 (VRChat)',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: TextField(
+                            controller: _hostController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(
+                              labelText: '送信先 IP アドレス',
+                              labelStyle: TextStyle(color: Colors.white70),
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (val) {
+                              if (val.trim().isNotEmpty) {
+                                provider.setOscHost(val.trim());
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 1,
+                          child: TextField(
+                            controller: _portController,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(
+                              labelText: 'ポート',
+                              labelStyle: TextStyle(color: Colors.white70),
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (val) {
+                              final port = int.tryParse(val.trim());
+                              if (port != null && port > 0) {
+                                provider.setOscPort(port);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SwitchListTile(
+                      title: const Text('左右軸 (Horizontal) 反転', style: TextStyle(color: Colors.white)),
+                      value: provider.config.invertOscX,
+                      activeColor: const Color(0xFF10B981),
+                      onChanged: (val) => provider.setInvertOscX(val),
+                    ),
+                    SwitchListTile(
+                      title: const Text('前後軸 (Vertical) 反転', style: TextStyle(color: Colors.white)),
+                      value: provider.config.invertOscY,
+                      activeColor: const Color(0xFF10B981),
+                      onChanged: (val) => provider.setInvertOscY(val),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           // デッドゾーン設定 Card
           Card(
             color: const Color(0xFF1E293B),
@@ -109,3 +265,4 @@ class SettingsView extends StatelessWidget {
     );
   }
 }
+
