@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/gamepad_provider.dart';
 import 'components/cog_painter.dart';
+import 'help_view.dart';
 import 'settings_view.dart';
 
 class DashboardView extends StatelessWidget {
@@ -28,7 +29,18 @@ class DashboardView extends StatelessWidget {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.help_outline, color: Colors.white70),
+            tooltip: '接続手順・ヘルプ',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HelpView()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings, color: Colors.white70),
+            tooltip: '設定',
             onPressed: () {
               Navigator.push(
                 context,
