@@ -46,7 +46,7 @@ jobs:
         if: matrix.target == 'macos'
         run: |
           cd App/build/macos/Build/Products/Release
-          zip -r ../../../../../${{ matrix.artifact_name }}.zip balance_board_app.app
+          zip -r "$GITHUB_WORKSPACE/${{ matrix.artifact_name }}.zip" balance_board_app.app
 
       - name: Build Windows Application
         if: matrix.target == 'windows'
@@ -57,7 +57,7 @@ jobs:
         if: matrix.target == 'windows'
         shell: powershell
         run: |
-          Compress-Archive -Path App/build/windows/x64/runner/Release/* -DestinationPath ${{ matrix.artifact_name }}.zip
+          Compress-Archive -Path App/build/windows/x64/runner/Release/* -DestinationPath "$env:GITHUB_WORKSPACE\${{ matrix.artifact_name }}.zip"
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
@@ -80,6 +80,7 @@ jobs:
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
           files: balance_board_app-*.zip
           generate_release_notes: true
         env:
