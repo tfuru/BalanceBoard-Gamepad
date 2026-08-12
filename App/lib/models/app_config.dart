@@ -50,7 +50,8 @@ class AppConfig {
     this.sensitivity = 1.0,
     this.deadzone = 0.05,
     this.autoConnect = false,
-    this.outputMode = OutputMode.virtualGamepad,
+    this.outputMode = OutputMode.none,
+
     this.oscHost = '127.0.0.1',
     this.oscPort = 9000,
     this.invertOscX = false,
