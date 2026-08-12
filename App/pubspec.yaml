@@ -1,8 +1,11 @@
 name: balance_board_app
-description: "A new Flutter project."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+description: "Wii Balance Board と ESP32 を使用した、体感型アナログゲームパッド・OSC・WASD 入力中継 PC 常駐アプリ"
+homepage: "https://github.com/tfuru/BalanceBoard-Gamepad"
+repository: "https://github.com/tfuru/BalanceBoard-Gamepad"
+issue_tracker: "https://github.com/tfuru/BalanceBoard-Gamepad/issues"
+
+publish_to: 'none'
+
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
