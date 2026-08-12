@@ -11,7 +11,7 @@ import '../services/jump_detector.dart';
 
 import '../models/github_release.dart';
 import '../services/github_release_service.dart';
-import '../services/esp32_flasher_service.dart';
+import '../services/esptool_flasher_service.dart';
 
 class GamepadProvider extends ChangeNotifier {
   final SerialService _serialService = SerialService();
@@ -19,8 +19,9 @@ class GamepadProvider extends ChangeNotifier {
   late final KeyboardService _keyboardService;
   final JumpDetector _jumpDetector = JumpDetector();
   final GithubReleaseService _releaseService = GithubReleaseService();
-  final Esp32FlasherService _flasherService = Esp32FlasherService();
+  final EsptoolFlasherService _flasherService = EsptoolFlasherService();
   StreamSubscription<String>? _dataSubscription;
+
 
   SensorData _currentData = const SensorData();
   final AppConfig _config = AppConfig();
