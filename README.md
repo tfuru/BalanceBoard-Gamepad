@@ -83,6 +83,12 @@ git tag v1.0.0
 
 # 2. タグを GitHub にプッシュ
 git push origin v1.0.0
+
+# 3. タグを再プッシュ（例: タグを削除して打ち直す場合）
+git tag -d <タグ名>
+git push origin :refs/tags/<タグ名>
+git tag <タグ名>
+git push origin <タグ名>
 ```
 
 > [!TIP]
