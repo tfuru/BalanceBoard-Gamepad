@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 
-
 class Esp32FlasherService {
   static const int flashBlockSize = 4096;
   static const int appOffset = 0x10000; // ESP32 アプリケーションパーティション標準オフセット
@@ -41,24 +40,27 @@ class Esp32FlasherService {
       await _sendSync(port, log);
 
       // 3. SPI Flash アタッチ
-      log('SPI Flash を初期化中...');
-      await _sendCommand(port, 0x0A, Uint8List(8));
+      log('SPI Flash を初期化中 (SPI_ATTACH)...');
+      await _sendCommand(port, 0x0A, Uint8List(8), timeoutMs: 5000);
 
       // 4. ファームウェア読み込み & Flash Begin
       final firmwareBytes = await firmwareFile.readAsBytes();
       final totalSize = firmwareBytes.length;
       final packetCount = (totalSize + flashBlockSize - 1) ~/ flashBlockSize;
+      final eraseSize = packetCount * flashBlockSize; // 4KB セクター境界アラインメント
 
-      log('ファームウェアサイズ: $totalSize バリア (ブロック数: $packetCount)');
-      log('Flash 開始要求 (Offset: 0x${appOffset.toRadixString(16)})...');
+      log('ファームウェアサイズ: $totalSize バイト (ブロック数: $packetCount)');
+      log('Flash 消去・開始要求 (Offset: 0x${appOffset.toRadixString(16)}, EraseSize: $eraseSize)...');
 
       final beginPayload = Uint8List(16);
       final beginData = ByteData.view(beginPayload.buffer);
-      beginData.setUint32(0, totalSize, Endian.little);
+      beginData.setUint32(0, eraseSize, Endian.little);
       beginData.setUint32(4, packetCount, Endian.little);
       beginData.setUint32(8, flashBlockSize, Endian.little);
       beginData.setUint32(12, appOffset, Endian.little);
-      await _sendCommand(port, 0x02, beginPayload);
+
+      // セクター消去待ち時間のため長めのタイムアウト (30秒) を設定
+      await _sendCommand(port, 0x02, beginPayload, timeoutMs: 30000);
 
       // 5. データブロック送信 (FLASH_DATA)
       log('ファームウェア書き込み開始...');
@@ -67,10 +69,12 @@ class Esp32FlasherService {
         final end = (start + flashBlockSize > totalSize) ? totalSize : start + flashBlockSize;
         final blockData = firmwareBytes.sublist(start, end);
 
-        // 4KB に満たない最終ブロックのパディング
+        // 4KB に満たない最終ブロックの 0xFF パディング
         final paddedBlock = Uint8List(flashBlockSize);
         paddedBlock.setAll(0, blockData);
-        paddedBlock.fillRange(blockData.length, flashBlockSize, 0xFF);
+        if (blockData.length < flashBlockSize) {
+          paddedBlock.fillRange(blockData.length, flashBlockSize, 0xFF);
+        }
 
         final checksum = _calculateChecksum(paddedBlock);
 
@@ -82,7 +86,7 @@ class Esp32FlasherService {
         dataData.setUint32(12, 0, Endian.little);
         dataPayload.setAll(16, paddedBlock);
 
-        await _sendCommand(port, 0x03, dataPayload, checksum: checksum);
+        await _sendCommand(port, 0x03, dataPayload, checksum: checksum, timeoutMs: 10000);
 
         final progress = (i + 1) / packetCount;
         onProgress?.call(progress);
@@ -95,7 +99,7 @@ class Esp32FlasherService {
       log('書き込み完了。再起動コマンド送信中...');
       final endPayload = Uint8List(4);
       ByteData.view(endPayload.buffer).setUint32(0, 1, Endian.little); // 1 = reboot
-      await _sendCommand(port, 0x04, endPayload);
+      await _sendCommand(port, 0x04, endPayload, timeoutMs: 5000);
 
       // マイコン再起動
       await _resetToApp(port);
@@ -113,14 +117,15 @@ class Esp32FlasherService {
     _setPins(port, rts: false, dtr: false);
     await Future.delayed(const Duration(milliseconds: 100));
 
-    // EN = LOW
+    // EN = LOW (Reset)
     _setPins(port, rts: true, dtr: false);
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    // IO0 = LOW, EN = HIGH (Enter Bootloader)
+    _setPins(port, rts: false, dtr: true);
     await Future.delayed(const Duration(milliseconds: 100));
 
-    // IO0 = LOW, EN = HIGH
-    _setPins(port, rts: false, dtr: true);
-    await Future.delayed(const Duration(milliseconds: 50));
-
+    // Release pins
     _setPins(port, rts: false, dtr: false);
     await Future.delayed(const Duration(milliseconds: 100));
   }
@@ -128,9 +133,9 @@ class Esp32FlasherService {
   /// 通常動作用リセット
   Future<void> _resetToApp(SerialPort port) async {
     _setPins(port, rts: true, dtr: false);
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 150));
     _setPins(port, rts: false, dtr: false);
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 150));
   }
 
   /// SerialPortConfig を使用して RTS / DTR ピン状態を設定
@@ -140,7 +145,6 @@ class Esp32FlasherService {
     config.dtr = dtr ? SerialPortDtr.on : SerialPortDtr.off;
     port.config = config;
   }
-
 
   /// SYNC コマンド送信
   Future<void> _sendSync(SerialPort port, void Function(String) log) async {
@@ -153,17 +157,21 @@ class Esp32FlasherService {
       syncPayload[i] = 0x55;
     }
 
-    for (int attempt = 1; attempt <= 20; attempt++) {
+    for (int attempt = 1; attempt <= 30; attempt++) {
       try {
         await _sendCommand(port, 0x08, syncPayload, timeoutMs: 300);
         return;
       } catch (_) {
-        if (attempt % 5 == 0) {
-          log('SYNC 再試行中 ($attempt/20)...');
+        if (attempt == 15) {
+          // 途中で一度リセットを再試行
+          log('SYNC 応答なし。リセットを再試行中...');
+          await _resetToBootloader(port);
+        } else if (attempt % 5 == 0) {
+          log('SYNC 再試行中 ($attempt/30)...');
         }
       }
     }
-    throw Exception('ESP32 との同期 (SYNC) に失敗しました。接続とポートを確認してください。');
+    throw Exception('ESP32 との同期 (SYNC) に失敗しました。COMポートの選択と書き込みボタン (BOOT) の長押しをお試しください。');
   }
 
   /// SLIP パケット生成・送信およびレスポンス受信
@@ -201,7 +209,7 @@ class Esp32FlasherService {
       }
     }
 
-    throw Exception('コマンド 0x${op.toRadixString(16)} のレスポンスタイムアウト');
+    throw Exception('コマンド 0x${op.toRadixString(16)} のレスポンスタイムアウト (${timeoutMs}ms)');
   }
 
   /// XOR チェックサム計算
@@ -265,3 +273,4 @@ class Esp32FlasherService {
     return null;
   }
 }
+
