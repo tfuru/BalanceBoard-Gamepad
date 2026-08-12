@@ -1,5 +1,7 @@
 # BalanceBoard-Gamepad 🎮
 
+[English](README.en.md) | [日本語](README.md)
+
 Wii Balance Board と ESP-WROOM-32 (Adafruit HUZZAH32)、および **PC 常駐中継アプリ (Flutter)** を使用した、体感型アナログゲームパッド化プロジェクトです。
 
 Wii Balance Board の4隅に搭載されている圧力・重量センサーの値を ESP32 で取得し、USB シリアル通信経由で PC の常駐中継アプリへ送信。常駐中継アプリが PC ゲーム向けの仮想ゲームパッド（アナログ入力）として認識・入力中継します。
@@ -100,7 +102,8 @@ git push origin <タグ名>
 
 ```text
 BalanceBoard-Gamepad/
-├── README.md               # 本ドキュメント
+├── README.md               # 本ドキュメント (日本語)
+├── README.en.md            # 英語版ドキュメント
 ├── Firmware/               # ESP32 用ファームウェア
 │   ├── Makefile            # PlatformIO 操作用 Makefile
 │   ├── README.md           # ファームウェア詳細ドキュメント
