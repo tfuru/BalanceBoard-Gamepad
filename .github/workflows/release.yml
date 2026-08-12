@@ -53,12 +53,13 @@ jobs:
           path = 'App/pubspec.yaml'
           ver = os.environ.get('APP_VERSION', '1.0.0')
           run_num = os.environ.get('GITHUB_RUN_NUMBER', '1')
-          with open(path, 'r') as f:
+          with open(path, 'r', encoding='utf-8') as f:
               content = f.read()
           content = re.sub(r'^version: .*', f'version: {ver}+{run_num}', content, flags=re.MULTILINE)
-          with open(path, 'w') as f:
+          with open(path, 'w', encoding='utf-8') as f:
               f.write(content)
           "
+
 
       - name: Install dependencies
         run: flutter pub get
