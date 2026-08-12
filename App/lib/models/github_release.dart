@@ -63,4 +63,15 @@ class GithubRelease {
       }
     }
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GithubRelease &&
+          runtimeType == other.runtimeType &&
+          tagName == other.tagName;
+
+  @override
+  int get hashCode => tagName.hashCode;
 }
+

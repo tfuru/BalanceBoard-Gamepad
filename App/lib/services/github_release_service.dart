@@ -10,26 +10,59 @@ class GithubReleaseService {
 
   GithubReleaseService({http.Client? client}) : _client = client ?? http.Client();
 
-  /// GitHub から Release/Tag 一覧を取得
+  /// GitHub から Release / Tag 一覧を取得 (/releases と /tags を結合)
   Future<List<GithubRelease>> fetchReleases({String repository = 'tfuru/BalanceBoard-Gamepad'}) async {
-    final url = Uri.parse('https://api.github.com/repos/$repository/releases');
-    final response = await _client.get(
-      url,
-      headers: {
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'BalanceBoard-Gamepad-App',
-      },
-    );
+    final releasesUrl = Uri.parse('https://api.github.com/repos/$repository/releases');
+    final tagsUrl = Uri.parse('https://api.github.com/repos/$repository/tags');
 
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = json.decode(response.body);
-      return jsonList
-          .map((item) => GithubRelease.fromJson(item as Map<String, dynamic>))
-          .toList();
-    } else {
-      throw Exception('GitHub Releases の取得に失敗しました (Status: ${response.statusCode})');
+    final headers = {
+      'Accept': 'application/vnd.github.v3+json',
+      'User-Agent': 'BalanceBoard-Gamepad-App',
+    };
+
+    final Map<String, GithubRelease> releaseMap = {};
+
+    // 1. /releases の取得
+    try {
+      final response = await _client.get(releasesUrl, headers: headers);
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        for (final item in jsonList) {
+          final release = GithubRelease.fromJson(item as Map<String, dynamic>);
+          if (release.tagName.isNotEmpty) {
+            releaseMap[release.tagName] = release;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 2. /tags の取得 (/releases にまだ登場していない Tag もカバー)
+    try {
+      final response = await _client.get(tagsUrl, headers: headers);
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = json.decode(response.body);
+        for (final item in jsonList) {
+          final tagName = item['name'] as String? ?? '';
+          if (tagName.isNotEmpty && !releaseMap.containsKey(tagName)) {
+            releaseMap[tagName] = GithubRelease(
+              tagName: tagName,
+              name: tagName,
+              body: 'ビルド中またはバイナリ未添付のタグ',
+              publishedAt: '',
+              assets: [],
+            );
+          }
+        }
+      }
+    } catch (_) {}
+
+    if (releaseMap.isEmpty) {
+      throw Exception('タグ・リリースの取得に失敗しました (リポジトリ: $repository)');
     }
+
+    return releaseMap.values.toList();
   }
+
 
   /// 指定したアセット (.bin) をダウンロードしてローカルファイルとして一時保存
   Future<File> downloadFirmwareAsset(

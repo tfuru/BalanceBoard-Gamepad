@@ -81,10 +81,13 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<GithubRelease>(
-                        value: provider.selectedRelease,
+                        value: provider.releases.contains(provider.selectedRelease)
+                            ? provider.selectedRelease
+                            : (provider.releases.isNotEmpty ? provider.releases.first : null),
                         dropdownColor: const Color(0xFF0F172A),
                         isExpanded: true,
                         hint: const Text('Tag を選択してください', style: TextStyle(color: Colors.white38)),
+
                         items: provider.releases.map((release) {
                           final hasBin = release.firmwareAsset != null;
                           return DropdownMenuItem<GithubRelease>(
