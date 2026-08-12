@@ -374,7 +374,9 @@ class GamepadProvider extends ChangeNotifier {
     final wasConnected = _isSerialConnected;
     if (wasConnected) {
       disconnect();
+      await Future.delayed(const Duration(milliseconds: 200));
     }
+
 
     _isFlashingFirmware = true;
     _flashProgress = 0.0;

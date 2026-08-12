@@ -115,11 +115,11 @@ class Esp32FlasherService {
   /// DTR / RTS トグルによる ESP32 ブートローダーリセット
   Future<void> _resetToBootloader(SerialPort port) async {
     _setPins(port, rts: false, dtr: false);
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 50));
 
     // EN = LOW (Reset)
     _setPins(port, rts: true, dtr: false);
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 150));
 
     // IO0 = LOW, EN = HIGH (Enter Bootloader)
     _setPins(port, rts: false, dtr: true);
@@ -127,7 +127,7 @@ class Esp32FlasherService {
 
     // Release pins
     _setPins(port, rts: false, dtr: false);
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 50));
   }
 
   /// 通常動作用リセット
@@ -146,7 +146,7 @@ class Esp32FlasherService {
     port.config = config;
   }
 
-  /// SYNC コマンド送信
+  /// SYNC コマンド送信 (esptool 互換の連続送信ループ)
   Future<void> _sendSync(SerialPort port, void Function(String) log) async {
     final syncPayload = Uint8List(36);
     syncPayload[0] = 0x07;
@@ -157,21 +157,43 @@ class Esp32FlasherService {
       syncPayload[i] = 0x55;
     }
 
-    for (int attempt = 1; attempt <= 30; attempt++) {
-      try {
-        await _sendCommand(port, 0x08, syncPayload, timeoutMs: 300);
-        return;
-      } catch (_) {
-        if (attempt == 15) {
-          // 途中で一度リセットを再試行
-          log('SYNC 応答なし。リセットを再試行中...');
-          await _resetToBootloader(port);
-        } else if (attempt % 5 == 0) {
-          log('SYNC 再試行中 ($attempt/30)...');
+    final pkt = Uint8List(8 + syncPayload.length);
+    pkt[0] = 0x00; // Request
+    pkt[1] = 0x08; // SYNC
+    final view = ByteData.view(pkt.buffer);
+    view.setUint16(2, syncPayload.length, Endian.little);
+    view.setUint32(4, 0, Endian.little);
+    pkt.setAll(8, syncPayload);
+    final slipSync = _encodeSlip(pkt);
+
+    final rxBuffer = <int>[];
+
+    for (int attempt = 1; attempt <= 40; attempt++) {
+      port.flush(SerialPortBuffer.both);
+      port.write(slipSync);
+
+      final startTime = DateTime.now();
+      while (DateTime.now().difference(startTime).inMilliseconds < 60) {
+        final readData = port.read(1024, timeout: 15);
+        if (readData.isNotEmpty) {
+          rxBuffer.addAll(readData);
+          final decoded = _tryDecodeSlipResponse(rxBuffer, 0x08);
+          if (decoded != null) {
+            log('ESP32 との同期 (SYNC) に成功しました！');
+            return;
+          }
         }
       }
+
+      if (attempt == 20) {
+        log('SYNC 応答待ち... リセット信号を再送中');
+        await _resetToBootloader(port);
+      } else if (attempt % 10 == 0) {
+        log('SYNC 送信中 ($attempt/40)...');
+      }
     }
-    throw Exception('ESP32 との同期 (SYNC) に失敗しました。COMポートの選択と書き込みボタン (BOOT) の長押しをお試しください。');
+
+    throw Exception('ESP32 との同期 (SYNC) に失敗しました。COMポートの選択を確認するか、BOOTボタンを押しながら再試行してください。');
   }
 
   /// SLIP パケット生成・送信およびレスポンス受信
@@ -237,40 +259,51 @@ class Esp32FlasherService {
     return Uint8List.fromList(bytes);
   }
 
-  /// SLIP デコード & レスポンス判定
+  /// SLIP デコード & レスポンス判定 (ゴミフレームを自動スキップ)
   Uint8List? _tryDecodeSlipResponse(List<int> rxBuffer, int expectedOp) {
-    int startIdx = rxBuffer.indexOf(0xC0);
-    if (startIdx == -1) return null;
+    while (true) {
+      int startIdx = rxBuffer.indexOf(0xC0);
+      if (startIdx == -1) {
+        rxBuffer.clear();
+        return null;
+      }
+      if (startIdx > 0) {
+        rxBuffer.removeRange(0, startIdx);
+        startIdx = 0;
+      }
 
-    int endIdx = rxBuffer.indexOf(0xC0, startIdx + 1);
-    if (endIdx == -1) return null;
+      int endIdx = rxBuffer.indexOf(0xC0, 1);
+      if (endIdx == -1) {
+        return null;
+      }
 
-    final rawFrame = rxBuffer.sublist(startIdx + 1, endIdx);
-    rxBuffer.removeRange(0, endIdx + 1);
+      final rawFrame = rxBuffer.sublist(1, endIdx);
+      rxBuffer.removeRange(0, endIdx + 1);
 
-    // SLIP デコード
-    final decoded = <int>[];
-    for (int i = 0; i < rawFrame.length; i++) {
-      if (rawFrame[i] == 0xDB && i + 1 < rawFrame.length) {
-        if (rawFrame[i + 1] == 0xDC) {
-          decoded.add(0xC0);
-          i++;
-        } else if (rawFrame[i + 1] == 0xDD) {
-          decoded.add(0xDB);
-          i++;
+      // SLIP デコード
+      final decoded = <int>[];
+      for (int i = 0; i < rawFrame.length; i++) {
+        if (rawFrame[i] == 0xDB && i + 1 < rawFrame.length) {
+          if (rawFrame[i + 1] == 0xDC) {
+            decoded.add(0xC0);
+            i++;
+          } else if (rawFrame[i + 1] == 0xDD) {
+            decoded.add(0xDB);
+            i++;
+          }
+        } else {
+          decoded.add(rawFrame[i]);
         }
-      } else {
-        decoded.add(rawFrame[i]);
       }
-    }
 
-    if (decoded.length >= 8) {
-      final respOp = decoded[1];
-      if (respOp == expectedOp) {
-        return Uint8List.fromList(decoded);
+      if (decoded.length >= 2) {
+        final respOp = decoded[1];
+        if (respOp == expectedOp) {
+          return Uint8List.fromList(decoded);
+        }
       }
     }
-    return null;
   }
+
 }
 
