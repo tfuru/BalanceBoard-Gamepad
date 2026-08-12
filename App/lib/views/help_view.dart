@@ -125,6 +125,35 @@ class HelpView extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          Card(
+            color: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.keyboard, color: Color(0xFF38BDF8)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Windows PCゲームに WASD/Space が届かない場合',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '・ゲームアプリや Steam ランチャーが管理者権限で動作している場合、Windows セキュリティ (UIPI) によりキー入力がブロックされます。本中継アプリ (balance_board_app.exe) も右クリックして「管理者として実行」で起動してください。',
+                    style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
         ],
       ),
     );
