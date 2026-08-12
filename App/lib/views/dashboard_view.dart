@@ -185,7 +185,7 @@ class DashboardView extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
-                    height: 260,
+                    height: 200,
                     child: AspectRatio(
                       aspectRatio: 1.0,
                       child: CustomPaint(
@@ -201,7 +201,7 @@ class DashboardView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -213,6 +213,7 @@ class DashboardView extends StatelessWidget {
                 ],
               ),
             ),
+
             const SizedBox(height: 16),
 
             // リアルタイム出力確認モニター欄

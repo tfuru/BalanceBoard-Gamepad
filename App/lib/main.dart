@@ -1,10 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:window_size/window_size.dart';
 import 'providers/gamepad_provider.dart';
 import 'views/dashboard_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+    setWindowMinSize(const Size(520, 680));
+    setWindowFrame(const Rect.fromLTWH(100, 100, 560, 780));
+  }
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => GamepadProvider(),
@@ -12,6 +20,7 @@ void main() {
     ),
   );
 }
+
 
 class BalanceBoardApp extends StatelessWidget {
   const BalanceBoardApp({super.key});
