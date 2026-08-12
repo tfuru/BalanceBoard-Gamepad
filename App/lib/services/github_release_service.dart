@@ -73,6 +73,13 @@ class GithubReleaseService {
     return releaseMap.values.toList();
   }
 
+  /// 最新の Release / Tag を取得
+  Future<GithubRelease?> fetchLatestRelease({String repository = 'tfuru/BalanceBoard-Gamepad'}) async {
+    final releases = await fetchReleases(repository: repository);
+    return releases.isNotEmpty ? releases.first : null;
+  }
+
+
 
 
   /// 指定したアセット (.bin) をダウンロードしてローカルファイルとして一時保存

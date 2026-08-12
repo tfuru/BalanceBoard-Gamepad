@@ -46,6 +46,24 @@ class GamepadProvider extends ChangeNotifier {
   String get flashLog => _flashLog;
   String? get flashError => _flashError;
 
+  // アプリ・ファームウェアバージョン確認状態
+  static const String currentAppVersion = '1.0.0';
+  GithubRelease? _latestAppRelease;
+  bool _isCheckingUpdate = false;
+  String? _updateCheckMessage;
+
+  GithubRelease? get latestAppRelease => _latestAppRelease;
+  bool get isCheckingUpdate => _isCheckingUpdate;
+  String? get updateCheckMessage => _updateCheckMessage;
+
+  bool get hasAppUpdate {
+    if (_latestAppRelease == null) return false;
+    final tag = _latestAppRelease!.tagName.replaceAll(RegExp(r'^[vV]'), '');
+    return tag.isNotEmpty && tag != currentAppVersion;
+  }
+
+
+
 
   SensorData get currentData => _currentData;
   AppConfig get config => _config;
@@ -90,7 +108,9 @@ class GamepadProvider extends ChangeNotifier {
     _oscService = OscService(host: _config.oscHost, port: _config.oscPort);
     _keyboardService = KeyboardService();
     refreshPorts();
+    checkAppUpdate();
   }
+
 
   void refreshPorts() {
     _availablePorts = SerialService.getAvailablePorts();
@@ -430,8 +450,35 @@ class GamepadProvider extends ChangeNotifier {
     }
   }
 
+  /// GitHub から最新バージョンを照会・確認
+  Future<void> checkAppUpdate() async {
+    _isCheckingUpdate = true;
+    _updateCheckMessage = 'GitHub バージョン情報を確認中...';
+    notifyListeners();
+
+    try {
+      final latest = await _releaseService.fetchLatestRelease();
+      _latestAppRelease = latest;
+
+      if (latest != null) {
+        if (hasAppUpdate) {
+          _updateCheckMessage = '新しいバージョン [${latest.tagName}] が利用可能です！';
+        } else {
+          _updateCheckMessage = '最新バージョン (v$currentAppVersion) を使用中です';
+        }
+      } else {
+        _updateCheckMessage = 'バージョン情報の取得結果が空でした';
+      }
+    } catch (e) {
+      _updateCheckMessage = 'バージョン確認エラー: $e';
+    } finally {
+      _isCheckingUpdate = false;
+      notifyListeners();
+    }
+  }
 
   @override
+
   void dispose() {
     _dataSubscription?.cancel();
     _serialService.dispose();
