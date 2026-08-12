@@ -9,11 +9,17 @@ import '../services/keyboard_service.dart';
 import '../services/jump_detector.dart';
 
 
+import '../models/github_release.dart';
+import '../services/github_release_service.dart';
+import '../services/esp32_flasher_service.dart';
+
 class GamepadProvider extends ChangeNotifier {
   final SerialService _serialService = SerialService();
   late final OscService _oscService;
   late final KeyboardService _keyboardService;
   final JumpDetector _jumpDetector = JumpDetector();
+  final GithubReleaseService _releaseService = GithubReleaseService();
+  final Esp32FlasherService _flasherService = Esp32FlasherService();
   StreamSubscription<String>? _dataSubscription;
 
   SensorData _currentData = const SensorData();
@@ -21,6 +27,24 @@ class GamepadProvider extends ChangeNotifier {
   List<String> _availablePorts = [];
   bool _isSerialConnected = false;
   String _statusMessage = '未接続';
+
+  // ファームウェア更新状態
+  List<GithubRelease> _releases = [];
+  GithubRelease? _selectedRelease;
+  bool _isFetchingReleases = false;
+  bool _isFlashingFirmware = false;
+  double _flashProgress = 0.0;
+  String _flashLog = '';
+  String? _flashError;
+
+  List<GithubRelease> get releases => _releases;
+  GithubRelease? get selectedRelease => _selectedRelease;
+  bool get isFetchingReleases => _isFetchingReleases;
+  bool get isFlashingFirmware => _isFlashingFirmware;
+  double get flashProgress => _flashProgress;
+  String get flashLog => _flashLog;
+  String? get flashError => _flashError;
+
 
   SensorData get currentData => _currentData;
   AppConfig get config => _config;
@@ -297,6 +321,112 @@ class GamepadProvider extends ChangeNotifier {
       _serialService.sendCommand('{"cmd":"tare"}');
     }
   }
+
+  /// GitHub から Release / Tag 一覧を取得
+  Future<void> fetchGithubReleases({String repo = 'tfuru/BalanceBoard-Gamepad'}) async {
+    _isFetchingReleases = true;
+    _flashError = null;
+    notifyListeners();
+
+    try {
+      _releases = await _releaseService.fetchReleases(repository: repo);
+      if (_releases.isNotEmpty) {
+        _selectedRelease = _releases.firstWhere(
+          (r) => r.firmwareAsset != null,
+          orElse: () => _releases.first,
+        );
+      }
+    } catch (e) {
+      _flashError = e.toString();
+    } finally {
+      _isFetchingReleases = false;
+      notifyListeners();
+    }
+  }
+
+  void setSelectedRelease(GithubRelease? release) {
+    _selectedRelease = release;
+    notifyListeners();
+  }
+
+  /// 選択された Tag のファームウェアを ESP32 へ書き込み
+  Future<bool> flashSelectedFirmware({String? targetPort}) async {
+    final port = targetPort ?? _config.selectedPort;
+    if (port.isEmpty) {
+      _flashError = '書き込み対象のシリアルポートを選択してください';
+      notifyListeners();
+      return false;
+    }
+
+    if (_selectedRelease == null) {
+      _flashError = '書き込み対象の Tag を選択してください';
+      notifyListeners();
+      return false;
+    }
+
+    final asset = _selectedRelease!.firmwareAsset;
+    if (asset == null) {
+      _flashError = '選択された Tag [${_selectedRelease!.tagName}] にファームウェアバイナリ (.bin) が含まれていません';
+      notifyListeners();
+      return false;
+    }
+
+    final wasConnected = _isSerialConnected;
+    if (wasConnected) {
+      disconnect();
+    }
+
+    _isFlashingFirmware = true;
+    _flashProgress = 0.0;
+    _flashLog = 'ファームウェア [${_selectedRelease!.tagName}] のダウンロードを開始します...';
+    _flashError = null;
+    notifyListeners();
+
+    try {
+      final downloadedFile = await _releaseService.downloadFirmwareAsset(
+        asset,
+        onProgress: (progress) {
+          _flashProgress = progress * 0.3; // ダウンロードフェーズ 0 ~ 30%
+          _flashLog = 'ダウンロード中: ${(progress * 100).toStringAsFixed(0)}%';
+          notifyListeners();
+        },
+      );
+
+      _flashLog = 'ダウンロード完了。ESP32 へファームウェア書き込み中...';
+      notifyListeners();
+
+      await _flasherService.flashFirmware(
+        portName: port,
+        firmwareFile: downloadedFile,
+        onProgress: (progress) {
+          _flashProgress = 0.3 + (progress * 0.7); // 書き込みフェーズ 30 ~ 100%
+          notifyListeners();
+        },
+        onLog: (msg) {
+          _flashLog = msg;
+          notifyListeners();
+        },
+      );
+
+      _flashProgress = 1.0;
+      _flashLog = '書き込み完了！ファームウェア更新に成功しました。';
+
+      if (wasConnected) {
+        await Future.delayed(const Duration(seconds: 1));
+        connect();
+      }
+
+      return true;
+    } catch (e) {
+      _flashError = '書き込みエラー: $e';
+      _flashLog = 'エラーが発生しました';
+      return false;
+    } finally {
+      _isFlashingFirmware = false;
+      notifyListeners();
+    }
+  }
+
 
   @override
   void dispose() {

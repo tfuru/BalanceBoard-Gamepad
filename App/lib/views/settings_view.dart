@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/gamepad_provider.dart';
 import '../models/app_config.dart';
-
+import 'components/firmware_update_card.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -43,7 +43,10 @@ class _SettingsViewState extends State<SettingsView> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const FirmwareUpdateCard(),
+          const SizedBox(height: 16),
           // 出力モード設定 Card
+
           Card(
             color: const Color(0xFF1E293B),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
