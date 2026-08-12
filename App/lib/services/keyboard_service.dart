@@ -5,28 +5,31 @@ import 'package:flutter/foundation.dart';
 
 enum WasdKey { w, a, s, d }
 
-/// Windows 64-bit INPUT 構造体 (SendInput API 用)
+/// Windows 64-bit (x64) INPUT 構造体 (SendInput API 用 - 40バイトアラインメント)
 final class NativeInput extends Struct {
   @Uint32()
-  external int type; // INPUT_KEYBOARD = 1
+  external int type; // 4 bytes (offset 0) - INPUT_KEYBOARD = 1
 
   @Uint32()
-  external int pad; // 64-bit アラインメントパディング
+  external int pad; // 4 bytes (offset 4) - 64bit アラインメントパディング
 
   @Uint16()
-  external int wVk;
+  external int wVk; // 2 bytes (offset 8)
 
   @Uint16()
-  external int wScan;
+  external int wScan; // 2 bytes (offset 10)
 
   @Uint32()
-  external int dwFlags;
+  external int dwFlags; // 4 bytes (offset 12)
 
   @Uint32()
-  external int time;
+  external int time; // 4 bytes (offset 16)
+
+  @Uint32()
+  external int pad2; // 4 bytes (offset 20) - 8バイトポインタパディング
 
   @Uint64()
-  external int dwExtraInfo;
+  external int dwExtraInfo; // 8 bytes (offset 24) -> Total size = 40 bytes
 }
 
 /// WASD キーボード入力エミュレーションサービス
@@ -257,27 +260,26 @@ class KeyboardService {
     }
 
     try {
-      // 1. SendInput API (現代の DirectX / DirectInput / ゲーム対応)
+      // 1. SendInput API (現代の DirectX / DirectInput / 3Dゲーム対応)
       if (_sendInput != null) {
         final input = calloc<NativeInput>();
         input.ref.type = 1; // INPUT_KEYBOARD = 1
-        input.ref.wVk = vkCode;
+        input.ref.wVk = 0; // KEYEVENTF_SCANCODE 指定時は wVk = 0
         input.ref.wScan = scanCode;
         // KEYEVENTF_KEYUP (0x0002) | KEYEVENTF_SCANCODE (0x0008)
         input.ref.dwFlags = (isDown ? 0 : 0x0002) | 0x0008;
         input.ref.time = 0;
         input.ref.dwExtraInfo = 0;
 
-        final structSize = sizeOf<NativeInput>();
-        _sendInput!(1, input, structSize);
+        _sendInput!(1, input, 40); // 64bit Windows の cbSize = 40
         calloc.free(input);
         return;
       }
 
-      // 2. keybd_event フォールバック (スキャンコード + KEYEVENTF_SCANCODE 指定)
+      // 2. keybd_event フォールバック (bVk = 0, bScan = scanCode, KEYEVENTF_SCANCODE 指定)
       if (_keybdEvent != null) {
         int flags = (isDown ? 0 : 2) | 0x0008; // 2 = KEYEVENTF_KEYUP, 8 = KEYEVENTF_SCANCODE
-        _keybdEvent!(vkCode, scanCode, flags, nullptr);
+        _keybdEvent!(0, scanCode, flags, nullptr);
       }
     } catch (e) {
       debugPrint('[KeyboardService] Windows キー送信エラー: $e');
