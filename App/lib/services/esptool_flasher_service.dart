@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class EsptoolFlasherService {
   /// esptool コマンド経由での ESP32 ファームウェア書き込み処理
@@ -13,11 +16,11 @@ class EsptoolFlasherService {
   }) async {
     final log = onLog ?? (msg) => debugPrint('[ESPTOOL] $msg');
 
-    log('書き込み環境 (Python / esptool) を確認中...');
+    log('書き込み環境 (同梱 esptool / Python) を確認中...');
     final runner = await _findEsptoolRunner(log);
     if (runner == null) {
       throw Exception(
-        'esptool および Python3 が見つかりませんでした。\n'
+        'esptool 実行環境の検出に失敗しました。\n'
         'Python3 をインストールするか、`pip install esptool` を実行してください。',
       );
     }
@@ -89,29 +92,58 @@ class EsptoolFlasherService {
     log('esptool によるファームウェア書き込みが完了しました！');
   }
 
-  /// esptool 実行ランナーの自動検出
+  /// esptool 実行ランナーの自動検出 (優先度: 同梱バイナリ -> Python esptool -> システム esptool -> pip インストール)
   Future<_EsptoolRunner?> _findEsptoolRunner(void Function(String) log) async {
-    final pythonCmd = Platform.isWindows ? 'python' : 'python3';
+    // 1. 同梱のスタンドアロン esptool バイナリの展開・確認
+    try {
+      final assetPath = Platform.isWindows
+          ? 'assets/esptool/bin/windows/esptool.exe'
+          : 'assets/esptool/bin/macos/esptool';
+      final byteData = await rootBundle.load(assetPath);
 
-    // 1. python3 -m esptool の確認
+      final tempDir = await getTemporaryDirectory();
+      final targetFileName = Platform.isWindows ? 'esptool_bundled.exe' : 'esptool_bundled';
+      final exeFile = File(p.join(tempDir.path, targetFileName));
+
+      if (!await exeFile.parent.exists()) {
+        await exeFile.parent.create(recursive: true);
+      }
+
+      await exeFile.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes), flush: true);
+
+      if (!Platform.isWindows) {
+        await Process.run('chmod', ['+x', exeFile.path]);
+      }
+
+      final testResult = await Process.run(exeFile.path, ['version']);
+      if (testResult.exitCode == 0) {
+        log('同梱されたスタンドアロン esptool バイナリを使用します (Python不要: v${testResult.stdout.toString().trim()})');
+        return _EsptoolRunner(executable: exeFile.path, baseArgs: []);
+      }
+    } catch (e) {
+      debugPrint('[ESPTOOL] 同梱バイナリ読み込み失敗、Python検出へ移行: $e');
+    }
+
+    // 2. python3 -m esptool の確認
+    final pythonCmd = Platform.isWindows ? 'python' : 'python3';
     try {
       final result = await Process.run(pythonCmd, ['-m', 'esptool', 'version']);
       if (result.exitCode == 0) {
-        log('Python esptool モジュールを検出しました: ${result.stdout.toString().trim()}');
+        log('Python esptool モジュールを使用します: ${result.stdout.toString().trim()}');
         return _EsptoolRunner(executable: pythonCmd, baseArgs: ['-m', 'esptool']);
       }
     } catch (_) {}
 
-    // 2. esptool スタンドアロンコマンドの確認
+    // 3. esptool スタンドアロンコマンド (PATH上) の確認
     try {
       final result = await Process.run('esptool', ['version']);
       if (result.exitCode == 0) {
-        log('スタンドアロン esptool コマンドを検出しました');
+        log('システム PATH 上の esptool コマンドを使用します');
         return _EsptoolRunner(executable: 'esptool', baseArgs: []);
       }
     } catch (_) {}
 
-    // 3. python3 はあるが esptool 未インストールの場合は自動 pip install 試行
+    // 4. python3 はあるが esptool 未インストールの場合は自動 pip install 試行
     try {
       final pyCheck = await Process.run(pythonCmd, ['--version']);
       if (pyCheck.exitCode == 0) {
@@ -120,8 +152,6 @@ class EsptoolFlasherService {
         if (pipRes.exitCode == 0) {
           log('esptool の自動インストールに成功しました！');
           return _EsptoolRunner(executable: pythonCmd, baseArgs: ['-m', 'esptool']);
-        } else {
-          log('esptool の自動インストールに失敗しました: ${pipRes.stderr}');
         }
       }
     } catch (_) {}
