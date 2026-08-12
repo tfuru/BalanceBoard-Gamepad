@@ -1,4 +1,4 @@
-name: Release App Build
+name: Release Build & Publish
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-app:
     name: Build App (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -70,22 +70,61 @@ jobs:
           path: ${{ matrix.artifact_name }}.zip
           retention-days: 1
 
+  build-firmware:
+    name: Build Firmware (ESP32)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Build Firmware
+        run: pio run
+        working-directory: Firmware
+
+      - name: Package Firmware Binaries
+        run: |
+          cd Firmware/.pio/build/featheresp32
+          cp firmware.bin "$GITHUB_WORKSPACE/balance_board_firmware-featheresp32.bin"
+          zip "$GITHUB_WORKSPACE/balance_board_firmware-featheresp32.zip" firmware.bin bootloader.bin partitions.bin
+
+      - name: Upload Firmware Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: balance_board_firmware
+          path: |
+            balance_board_firmware-featheresp32.bin
+            balance_board_firmware-featheresp32.zip
+          retention-days: 1
+
   release:
     name: Create GitHub Release
-    needs: build
+    needs: [build-app, build-firmware]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: balance_board_app-*
           merge-multiple: true
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: balance_board_app-*.zip
+          files: |
+            balance_board_app-*.zip
+            balance_board_firmware-*
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
