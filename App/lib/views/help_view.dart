@@ -125,6 +125,34 @@ class HelpView extends StatelessWidget {
               ),
             ),
           ),
+          Card(
+            color: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.sports_esports, color: Color(0xFF38BDF8)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Windows で仮想ゲームパッドが認識されない場合',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '・Windows で XInput 仮想ゲームパッドとして認識させるには「ViGEmBus (Virtual Gamepad Emulation Bus)」ドライバーのインストールが必要です。\n'
+                    '・ドライバー未導入時や動作しない場合は、設定画面で出力モードを「WASD キーボード」モードに切り替えることで、直ちに PC キーボード入力として操作可能です。',
+                    style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
           Card(
             color: const Color(0xFF1E293B),
@@ -136,7 +164,7 @@ class HelpView extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.keyboard, color: Color(0xFF38BDF8)),
+                      Icon(Icons.keyboard, color: Color(0xFFF59E0B)),
                       SizedBox(width: 8),
                       Text(
                         'Windows PCゲームに WASD/Space が届かない場合',
