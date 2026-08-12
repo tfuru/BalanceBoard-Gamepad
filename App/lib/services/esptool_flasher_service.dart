@@ -112,7 +112,7 @@ class EsptoolFlasherService {
       await exeFile.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes), flush: true);
 
       if (!Platform.isWindows) {
-        await Process.run('chmod', ['+x', exeFile.path]);
+        await Process.run('chmod', ['755', exeFile.path]);
       }
 
       final testResult = await Process.run(exeFile.path, ['version']);
@@ -121,40 +121,74 @@ class EsptoolFlasherService {
         return _EsptoolRunner(executable: exeFile.path, baseArgs: []);
       }
     } catch (e) {
-      debugPrint('[ESPTOOL] 同梱バイナリ読み込み失敗、Python検出へ移行: $e');
+      log('同梱バイナリ起動スキップ ($e)。システム Python / esptool パス検索へ移行します...');
     }
 
-    // 2. python3 -m esptool の確認
-    final pythonCmd = Platform.isWindows ? 'python' : 'python3';
-    try {
-      final result = await Process.run(pythonCmd, ['-m', 'esptool', 'version']);
-      if (result.exitCode == 0) {
-        log('Python esptool モジュールを使用します: ${result.stdout.toString().trim()}');
-        return _EsptoolRunner(executable: pythonCmd, baseArgs: ['-m', 'esptool']);
-      }
-    } catch (_) {}
+    final userHome = Platform.environment['HOME'] ?? '';
 
-    // 3. esptool スタンドアロンコマンド (PATH上) の確認
-    try {
-      final result = await Process.run('esptool', ['version']);
-      if (result.exitCode == 0) {
-        log('システム PATH 上の esptool コマンドを使用します');
-        return _EsptoolRunner(executable: 'esptool', baseArgs: []);
-      }
-    } catch (_) {}
+    // 2. Python コマンドの候補パス一覧 (macOS App Sandbox 内での PATH 制限対策)
+    final pythonCandidates = Platform.isWindows
+        ? [
+            'python',
+            'python3',
+            r'C:\Python312\python.exe',
+            r'C:\Python311\python.exe',
+            r'C:\Python310\python.exe',
+            r'C:\Python39\python.exe',
+          ]
+        : [
+            if (userHome.isNotEmpty) '$userHome/.pyenv/shims/python3',
+            '/opt/homebrew/bin/python3',
+            '/usr/local/bin/python3',
+            '/usr/bin/python3',
+            'python3',
+            'python',
+          ];
+
+    for (final pyPath in pythonCandidates) {
+      try {
+        final result = await Process.run(pyPath, ['-m', 'esptool', 'version']);
+        if (result.exitCode == 0) {
+          log('Python esptool モジュールを検出しました ($pyPath): ${result.stdout.toString().trim()}');
+          return _EsptoolRunner(executable: pyPath, baseArgs: ['-m', 'esptool']);
+        }
+      } catch (_) {}
+    }
+
+    // 3. esptool スタンドアロンコマンドの候補パス一覧
+    final esptoolCandidates = Platform.isWindows
+        ? ['esptool.exe', 'esptool']
+        : [
+            if (userHome.isNotEmpty) '$userHome/.pyenv/shims/esptool',
+            '/opt/homebrew/bin/esptool',
+            '/usr/local/bin/esptool',
+            'esptool',
+          ];
+
+    for (final espPath in esptoolCandidates) {
+      try {
+        final result = await Process.run(espPath, ['version']);
+        if (result.exitCode == 0) {
+          log('esptool コマンドを検出しました ($espPath): ${result.stdout.toString().trim()}');
+          return _EsptoolRunner(executable: espPath, baseArgs: []);
+        }
+      } catch (_) {}
+    }
 
     // 4. python3 はあるが esptool 未インストールの場合は自動 pip install 試行
-    try {
-      final pyCheck = await Process.run(pythonCmd, ['--version']);
-      if (pyCheck.exitCode == 0) {
-        log('Python を検出しました (${pyCheck.stdout.toString().trim()})。esptool を自動インストール中...');
-        final pipRes = await Process.run(pythonCmd, ['-m', 'pip', 'install', 'esptool']);
-        if (pipRes.exitCode == 0) {
-          log('esptool の自動インストールに成功しました！');
-          return _EsptoolRunner(executable: pythonCmd, baseArgs: ['-m', 'esptool']);
+    for (final pyPath in pythonCandidates) {
+      try {
+        final pyCheck = await Process.run(pyPath, ['--version']);
+        if (pyCheck.exitCode == 0) {
+          log('Python を検出しました ($pyPath: ${pyCheck.stdout.toString().trim()})。esptool を自動インストール中...');
+          final pipRes = await Process.run(pyPath, ['-m', 'pip', 'install', 'esptool']);
+          if (pipRes.exitCode == 0) {
+            log('esptool の自動インストールに成功しました！');
+            return _EsptoolRunner(executable: pyPath, baseArgs: ['-m', 'esptool']);
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
+    }
 
     return null;
   }
