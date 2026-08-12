@@ -5,6 +5,30 @@ import 'package:flutter/foundation.dart';
 
 enum WasdKey { w, a, s, d }
 
+/// Windows 64-bit INPUT 構造体 (SendInput API 用)
+final class NativeInput extends Struct {
+  @Uint32()
+  external int type; // INPUT_KEYBOARD = 1
+
+  @Uint32()
+  external int pad; // 64-bit アラインメントパディング
+
+  @Uint16()
+  external int wVk;
+
+  @Uint16()
+  external int wScan;
+
+  @Uint32()
+  external int dwFlags;
+
+  @Uint32()
+  external int time;
+
+  @Uint64()
+  external int dwExtraInfo;
+}
+
 /// WASD キーボード入力エミュレーションサービス
 class KeyboardService {
   bool _isWPressed = false;
@@ -23,8 +47,10 @@ class KeyboardService {
   void Function(int, Pointer<Void>)? _cgEventPost;
   void Function(Pointer<Void>)? _cfRelease;
 
-  // Windows FFI Binding
+  // Windows FFI Binding (SendInput + MapVirtualKeyW + keybd_event)
   DynamicLibrary? _user32Lib;
+  int Function(int, Pointer<NativeInput>, int)? _sendInput;
+  int Function(int, int)? _mapVirtualKey;
   void Function(int, int, int, Pointer<Void>)? _keybdEvent;
 
   // macOS Accessibility Permission check
@@ -38,7 +64,7 @@ class KeyboardService {
     try {
       if (Platform.isMacOS) {
         _cgLib = DynamicLibrary.open('/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices');
-        
+
         _cgEventCreateKeyboardEvent = _cgLib!
             .lookup<NativeFunction<Pointer<Void> Function(Pointer<Void>, Uint16, Bool)>>('CGEventCreateKeyboardEvent')
             .asFunction();
@@ -61,9 +87,23 @@ class KeyboardService {
       } else if (Platform.isWindows) {
         _user32Lib = DynamicLibrary.open('user32.dll');
 
-        _keybdEvent = _user32Lib!
-            .lookup<NativeFunction<Void Function(Uint8, Uint8, Uint32, Pointer<Void>)>>('keybd_event')
-            .asFunction();
+        try {
+          _sendInput = _user32Lib!
+              .lookup<NativeFunction<Uint32 Function(Uint32, Pointer<NativeInput>, Int32)>>('SendInput')
+              .asFunction();
+        } catch (_) {}
+
+        try {
+          _mapVirtualKey = _user32Lib!
+              .lookup<NativeFunction<Uint32 Function(Uint32, Uint32)>>('MapVirtualKeyW')
+              .asFunction();
+        } catch (_) {}
+
+        try {
+          _keybdEvent = _user32Lib!
+              .lookup<NativeFunction<Void Function(Uint8, Uint8, Uint32, Pointer<Void>)>>('keybd_event')
+              .asFunction();
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint('[KeyboardService] FFI 初期化エラー: $e');
@@ -83,7 +123,6 @@ class KeyboardService {
     }
     return true;
   }
-
 
   /// WASD キーの押し下げ / 離脱を状態管理して送信
   void updateKeyStates({
@@ -156,30 +195,28 @@ class KeyboardService {
   }
 
   void _sendWindowsKey(WasdKey key, bool isDown) {
-    if (_keybdEvent == null) return;
-
     int vkCode;
+    int fallbackScanCode;
     switch (key) {
       case WasdKey.w:
         vkCode = 0x57;
+        fallbackScanCode = 0x11;
         break;
       case WasdKey.a:
         vkCode = 0x41;
+        fallbackScanCode = 0x1E;
         break;
       case WasdKey.s:
         vkCode = 0x53;
+        fallbackScanCode = 0x1F;
         break;
       case WasdKey.d:
         vkCode = 0x44;
+        fallbackScanCode = 0x20;
         break;
     }
 
-    try {
-      int flags = isDown ? 0 : 2; // 2 = KEYEVENTF_KEYUP
-      _keybdEvent!(vkCode, 0, flags, nullptr);
-    } catch (e) {
-      debugPrint('[KeyboardService] Windows keybd_event エラー: $e');
-    }
+    _sendWindowsKeyWithScanCode(vkCode, fallbackScanCode, isDown);
   }
 
   /// スペースキー (Space) の KeyDown / KeyUp 送信
@@ -206,12 +243,44 @@ class KeyboardService {
   }
 
   void _sendRawWindowsKey(int vkCode, bool isDown) {
-    if (_keybdEvent == null) return;
+    int fallbackScanCode = (vkCode == 0x20) ? 0x39 : 0;
+    _sendWindowsKeyWithScanCode(vkCode, fallbackScanCode, isDown);
+  }
+
+  void _sendWindowsKeyWithScanCode(int vkCode, int fallbackScanCode, bool isDown) {
+    int scanCode = 0;
+    if (_mapVirtualKey != null) {
+      scanCode = _mapVirtualKey!(vkCode, 0); // MAPVK_VK_TO_VSC = 0
+    }
+    if (scanCode == 0) {
+      scanCode = fallbackScanCode;
+    }
+
     try {
-      int flags = isDown ? 0 : 2;
-      _keybdEvent!(vkCode, 0, flags, nullptr);
+      // 1. SendInput API (現代の DirectX / DirectInput / ゲーム対応)
+      if (_sendInput != null) {
+        final input = calloc<NativeInput>();
+        input.ref.type = 1; // INPUT_KEYBOARD = 1
+        input.ref.wVk = vkCode;
+        input.ref.wScan = scanCode;
+        // KEYEVENTF_KEYUP (0x0002) | KEYEVENTF_SCANCODE (0x0008)
+        input.ref.dwFlags = (isDown ? 0 : 0x0002) | 0x0008;
+        input.ref.time = 0;
+        input.ref.dwExtraInfo = 0;
+
+        final structSize = sizeOf<NativeInput>();
+        _sendInput!(1, input, structSize);
+        calloc.free(input);
+        return;
+      }
+
+      // 2. keybd_event フォールバック (スキャンコード + KEYEVENTF_SCANCODE 指定)
+      if (_keybdEvent != null) {
+        int flags = (isDown ? 0 : 2) | 0x0008; // 2 = KEYEVENTF_KEYUP, 8 = KEYEVENTF_SCANCODE
+        _keybdEvent!(vkCode, scanCode, flags, nullptr);
+      }
     } catch (e) {
-      debugPrint('[KeyboardService] Windows keybd_event エラー: $e');
+      debugPrint('[KeyboardService] Windows キー送信エラー: $e');
     }
   }
 
@@ -219,5 +288,4 @@ class KeyboardService {
     releaseAllKeys();
     sendSpaceKey(false);
   }
-
 }
