@@ -47,7 +47,12 @@ class GamepadProvider extends ChangeNotifier {
   String? get flashError => _flashError;
 
   // アプリ・ファームウェアバージョン確認状態
-  static const String currentAppVersion = '1.0.0';
+  static String get currentAppVersion {
+    const envVersion = String.fromEnvironment('APP_VERSION');
+    if (envVersion.isNotEmpty) return envVersion;
+    return '1.0.0';
+  }
+
   GithubRelease? _latestAppRelease;
   bool _isCheckingUpdate = false;
   String? _updateCheckMessage;
