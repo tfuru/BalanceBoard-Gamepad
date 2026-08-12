@@ -93,7 +93,14 @@ class GithubReleaseService {
 
     final tempDir = await getTemporaryDirectory();
     final saveFile = File(p.join(tempDir.path, asset.name));
+
+    // 保存先ディレクトリが存在しない場合は作成
+    if (!await saveFile.parent.exists()) {
+      await saveFile.parent.create(recursive: true);
+    }
+
     final sink = saveFile.openWrite();
+
 
     await for (final chunk in res.stream) {
       downloadedBytes += chunk.length;
