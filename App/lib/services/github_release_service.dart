@@ -22,6 +22,8 @@ class GithubReleaseService {
 
     final Map<String, GithubRelease> releaseMap = {};
 
+    String? lastError;
+
     // 1. /releases の取得
     try {
       final response = await _client.get(releasesUrl, headers: headers);
@@ -33,8 +35,12 @@ class GithubReleaseService {
             releaseMap[release.tagName] = release;
           }
         }
+      } else {
+        lastError = 'HTTP status ${response.statusCode} for /releases';
       }
-    } catch (_) {}
+    } catch (e) {
+      lastError = e.toString();
+    }
 
     // 2. /tags の取得 (/releases にまだ登場していない Tag もカバー)
     try {
@@ -53,15 +59,20 @@ class GithubReleaseService {
             );
           }
         }
+      } else {
+        lastError ??= 'HTTP status ${response.statusCode} for /tags';
       }
-    } catch (_) {}
+    } catch (e) {
+      lastError ??= e.toString();
+    }
 
     if (releaseMap.isEmpty) {
-      throw Exception('タグ・リリースの取得に失敗しました (リポジトリ: $repository)');
+      throw Exception('タグ・リリースの取得に失敗しました (リポジトリ: $repository${lastError != null ? " / 詳細: $lastError" : ""})');
     }
 
     return releaseMap.values.toList();
   }
+
 
 
   /// 指定したアセット (.bin) をダウンロードしてローカルファイルとして一時保存
