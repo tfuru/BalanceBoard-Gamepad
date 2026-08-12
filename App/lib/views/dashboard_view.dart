@@ -118,14 +118,19 @@ class DashboardView extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'ステータス: ${provider.statusMessage}',
-                        style: TextStyle(
-                          color: provider.isSerialConnected ? const Color(0xFF10B981) : Colors.white60,
-                          fontSize: 12,
+                      Expanded(
+                        child: Text(
+                          'ステータス: ${provider.statusMessage}',
+                          style: TextStyle(
+                            color: provider.isSerialConnected ? const Color(0xFF10B981) : Colors.white60,
+                            fontSize: 12,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           const Text('出力モード: ', style: TextStyle(color: Colors.white70, fontSize: 12)),
                           DropdownButton<OutputMode>(
