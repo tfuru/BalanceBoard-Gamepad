@@ -80,40 +80,27 @@ class GithubReleaseService {
     GithubReleaseAsset asset, {
     void Function(double progress)? onProgress,
   }) async {
-    final req = http.Request('GET', Uri.parse(asset.browserDownloadUrl));
-    req.headers['User-Agent'] = 'BalanceBoard-Gamepad-App';
-
-    final res = await _client.send(req);
-    if (res.statusCode != 200) {
-      throw Exception('ファームウェアのダウンロードに失敗しました (Status: ${res.statusCode})');
-    }
-
-    final totalBytes = res.contentLength ?? asset.size;
-    int downloadedBytes = 0;
-
     final tempDir = await getTemporaryDirectory();
     final saveFile = File(p.join(tempDir.path, asset.name));
 
-    // 保存先ディレクトリが存在しない場合は作成
+    // 保存先親ディレクトリの存在チェックと作成
     if (!await saveFile.parent.exists()) {
       await saveFile.parent.create(recursive: true);
     }
 
-    final sink = saveFile.openWrite();
+    final response = await _client.get(
+      Uri.parse(asset.browserDownloadUrl),
+      headers: {'User-Agent': 'BalanceBoard-Gamepad-App'},
+    );
 
-
-    await for (final chunk in res.stream) {
-      downloadedBytes += chunk.length;
-      sink.add(chunk);
-
-      if (totalBytes > 0 && onProgress != null) {
-        onProgress(downloadedBytes / totalBytes);
-      }
+    if (response.statusCode != 200) {
+      throw Exception('ファームウェアのダウンロードに失敗しました (Status: ${response.statusCode})');
     }
 
-    await sink.flush();
-    await sink.close();
+    await saveFile.writeAsBytes(response.bodyBytes, flush: true);
+    onProgress?.call(1.0);
 
     return saveFile;
   }
+
 }
