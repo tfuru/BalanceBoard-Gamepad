@@ -23,7 +23,14 @@ class DashboardView extends StatelessWidget {
         backgroundColor: const Color(0xFF1E293B),
         title: Row(
           children: [
-            const Icon(Icons.sports_esports, color: Color(0xFF38BDF8)),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                'assets/app_icon.png',
+                width: 28,
+                height: 28,
+              ),
+            ),
             const SizedBox(width: 10),
             Text(
               l10n.appTitle,
