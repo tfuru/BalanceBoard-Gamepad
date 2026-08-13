@@ -1,6 +1,10 @@
 # BalanceBoard-Gamepad ファームウェア
 
-Wii Balance Board と Bluetooth Classic 通信を行い、取得したセンサー・重心データを USB シリアル通信 (115200bps / JSON) 経由で PC の **常駐中継アプリ (App)** へ送信する ESP-WROOM-32 (Adafruit HUZZAH32) 用ファームウェアです。
+Wii Balance Board と Bluetooth Classic 通信を行い、取得したセンサー・重心データを USB シリアル通信 (115200bps / JSON) 経由で PC の **常駐中継アプリ (App)** へ送信する ESP32 用ファームウェアです。
+
+### 対応ボード
+- **Adafruit HUZZAH32 / Feather ESP32** (`featheresp32`)
+- **Freenove ESP32-WROVER Dev Board (FNK0090)** (`freenove_esp32_wrover`)
 
 ---
 
@@ -21,11 +25,24 @@ Wii Balance Board と Bluetooth Classic 通信を行い、取得したセンサ�
 
 | コマンド | 説明 | 実行される PlatformIO コマンド |
 | :--- | :--- | :--- |
-| `make build` または `make` | ファームウェアのビルド | `pio run` |
-| `make upload` | ESP32 へのファームウェア書き込み | `pio run --target upload` |
+| `make build` | 指定ボードのビルド (デフォルト: `featheresp32`) | `pio run -e $(BOARD)` |
+| `make build-all` | 全対応ボードを一括ビルド | `pio run` |
+| `make upload` | 指定ボードへのファームウェア書き込み | `pio run -e $(BOARD) --target upload` |
+| `make upload-feather` | Adafruit Feather ESP32 へ書き込み | `pio run -e featheresp32 --target upload` |
+| `make upload-freenove` | Freenove ESP32-WROVER へ書き込み | `pio run -e freenove_esp32_wrover --target upload` |
 | `make monitor` | シリアルモニタの起動 | `pio device monitor` |
 | `make clean` | ビルド成果物の削除 | `pio run --target clean` |
 | `make help` | 利用可能なターゲットの表示 | - |
+
+> **例: ボードを指定して実行**
+> ```bash
+> # Freenove ESP32-WROVER ボードのビルド・書き込み
+> BOARD=freenove_esp32_wrover make build
+> BOARD=freenove_esp32_wrover make upload
+> # または
+> make upload-freenove
+> ```
+
 
 ---
 
