@@ -121,7 +121,7 @@ class DashboardView extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'Status: ${provider.statusMessage}',
+                          'Status: ${provider.getStatusMessage(l10n)}',
                           style: TextStyle(
                             color: provider.isSerialConnected ? const Color(0xFF10B981) : Colors.white60,
                             fontSize: 12,

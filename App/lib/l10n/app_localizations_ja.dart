@@ -30,6 +30,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get disconnectComplete => '切断完了';
 
   @override
+  String get noPortSelected => 'シリアルポートが選択されていません';
+
+  @override
+  String get connectFailed => '接続失敗';
+
+  @override
   String get selectPortHint => 'COMポート選択';
 
   @override

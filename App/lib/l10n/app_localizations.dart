@@ -140,6 +140,18 @@ abstract class AppLocalizations {
   /// **'Disconnected successfully'**
   String get disconnectComplete;
 
+  /// No description provided for @noPortSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No serial port selected'**
+  String get noPortSelected;
+
+  /// No description provided for @connectFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed'**
+  String get connectFailed;
+
   /// No description provided for @selectPortHint.
   ///
   /// In en, this message translates to:

@@ -30,6 +30,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get disconnectComplete => 'Disconnected successfully';
 
   @override
+  String get noPortSelected => 'No serial port selected';
+
+  @override
+  String get connectFailed => 'Connection failed';
+
+  @override
   String get selectPortHint => 'Select COM Port';
 
   @override

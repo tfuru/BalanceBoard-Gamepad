@@ -7,6 +7,8 @@
   "connected": "Connected",
   "disconnected": "Disconnected",
   "disconnectComplete": "Disconnected successfully",
+  "noPortSelected": "No serial port selected",
+  "connectFailed": "Connection failed",
   "selectPortHint": "Select COM Port",
   "refreshPortsTooltip": "Refresh port list",
   "connectBtn": "Connect",
