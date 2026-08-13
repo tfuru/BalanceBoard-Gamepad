@@ -52,7 +52,7 @@ Wii Balance Board と Bluetooth Classic 通信を行い、取得したセンサ�
 Firmware/
 ├── Makefile          # PlatformIO 操作用 Makefile
 ├── README.md         # ファームウェアドキュメント
-├── platformio.ini    # PlatformIO 設定ファイル (`featheresp32`)
+├── platformio.ini    # PlatformIO 設定ファイル (`featheresp32`, `freenove_esp32_wrover`)
 └── src/              # ソースコード
     ├── config.h             # 共通設定・定数
     ├── main.cpp            # メインプログラム

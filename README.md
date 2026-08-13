@@ -2,7 +2,7 @@
 
 [English](README.en.md) | [日本語](README.md)
 
-Wii Balance Board と ESP-WROOM-32 (Adafruit HUZZAH32)、および **PC 常駐中継アプリ (Flutter)** を使用した、体感型アナログゲームパッド化プロジェクトです。
+Wii Balance Board と ESP32 ボード (Adafruit HUZZAH32 / Freenove ESP32-WROVER 等)、および **PC 常駐中継アプリ (Flutter)** を使用した、体感型アナログゲームパッド化プロジェクトです。
 
 Wii Balance Board の4隅に搭載されている圧力・重量センサーの値を ESP32 で取得し、USB シリアル通信経由で PC の常駐中継アプリへ送信。常駐中継アプリが PC ゲーム向けの仮想ゲームパッド（アナログ入力）として認識・入力中継します。
 
@@ -12,7 +12,7 @@ Wii Balance Board の4隅に搭載されている圧力・重量センサーの�
 
 ```mermaid
 flowchart LR
-    WBB["Wii Balance Board\n(圧力センサー ×4)"] -- Bluetooth Classic --> ESP["ESP-WROOM-32\n(HUZZAH32)"]
+    WBB["Wii Balance Board\n(圧力センサー ×4)"] -- Bluetooth Classic --> ESP["ESP32 ボード\n(HUZZAH32 / WROVER等)"]
     ESP -- USB Serial (115200bps / JSON) --> App["PC 常駐中継アプリ\n(Flutter)"]
     App -- 仮想 Gamepad API (XInput / DirectInput) --> Game["PC ゲーム"]
 ```
@@ -32,8 +32,9 @@ flowchart LR
 | デバイス / コンポーネント | 概要 / 入手先目安 |
 | :--- | :--- |
 | **Wii Balance Board** | 任天堂 Wii 用バランスボード（中古店等で約1,000円〜入手可能） |
-| **ESP-WROOM-32 (Adafruit HUZZAH32)** | Bluetooth Classic 対応の ESP32 開発用ボード |
+| **ESP32 開発ボード** | Bluetooth Classic 対応の ESP32 ボード<br>・Adafruit HUZZAH32 / Feather ESP32 (`featheresp32`)<br>・Freenove ESP32-WROVER Dev Board (FNK0090) (`freenove_esp32_wrover`) |
 | **USB ケーブル** | ESP32 と PC 接続・給電用ケーブル |
+
 
 ---
 

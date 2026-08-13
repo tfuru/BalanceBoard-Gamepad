@@ -54,8 +54,8 @@ class HelpView extends StatelessWidget {
           _buildStepCard(
             stepNumber: 1,
             icon: Icons.usb,
-            title: 'ESP-WROOM-32 を PC と接続',
-            description: 'ESP-WROOM-32 (Adafruit HUZZAH32) を USB ケーブルで PC に接続します。',
+            title: 'ESP32 を PC と接続',
+            description: 'ESP32 開発ボード (Adafruit HUZZAH32 / Freenove ESP32-WROVER 等) を USB ケーブルで PC に接続します。',
           ),
           _buildStepCard(
             stepNumber: 2,
