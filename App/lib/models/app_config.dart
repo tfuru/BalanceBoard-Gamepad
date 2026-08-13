@@ -62,7 +62,7 @@ class AppConfig {
   int jumpHoldMs;
 
   AppConfig({
-    this.locale = const Locale('ja'),
+    this.locale = const Locale('en'),
     this.selectedPort = '',
     this.baudRate = 115200,
     this.sensitivity = 1.0,
