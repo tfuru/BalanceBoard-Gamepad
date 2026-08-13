@@ -2,7 +2,7 @@
 
 [English](README.en.md) | [日本語](README.md)
 
-A motion-sensing analog gamepad project that turns the Wii Balance Board into a PC gamepad using an ESP-WROOM-32 (Adafruit HUZZAH32) and a **PC background companion app (Flutter)**.
+A motion-sensing analog gamepad project that turns the Wii Balance Board into a PC gamepad using an ESP32 board (Adafruit HUZZAH32, Freenove ESP32-WROVER, etc.) and a **PC background companion app (Flutter)**.
 
 Values from the four weight/pressure sensors located at the corners of the Wii Balance Board are read by the ESP32 and transmitted via USB serial communication to the PC companion app. The app translates these inputs into a virtual gamepad (analog input), OSC messages, or WASD keyboard controls for PC games.
 
@@ -12,7 +12,7 @@ Values from the four weight/pressure sensors located at the corners of the Wii B
 
 ```mermaid
 flowchart LR
-    WBB["Wii Balance Board\n(Pressure Sensors ×4)"] -- Bluetooth Classic --> ESP["ESP-WROOM-32\n(HUZZAH32)"]
+    WBB["Wii Balance Board\n(Pressure Sensors ×4)"] -- Bluetooth Classic --> ESP["ESP32 Board\n(HUZZAH32 / WROVER)"]
     ESP -- USB Serial (115200bps / JSON) --> App["PC Companion App\n(Flutter)"]
     App -- Virtual Gamepad API (XInput / DirectInput) / OSC / WASD --> Game["PC Games / VRChat"]
 ```
@@ -32,8 +32,9 @@ flowchart LR
 | Device / Component | Description / Notes |
 | :--- | :--- |
 | **Wii Balance Board** | Nintendo Wii Balance Board |
-| **ESP-WROOM-32 (Adafruit HUZZAH32)** | ESP32 development board supporting Bluetooth Classic |
+| **ESP32 Development Board** | ESP32 board supporting Bluetooth Classic<br>- Adafruit HUZZAH32 / Feather ESP32 (`featheresp32`)<br>- Freenove ESP32-WROVER Dev Board (FNK0090) (`freenove_esp32_wrover`) |
 | **USB Cable** | USB cable for power and serial communication between ESP32 and PC |
+
 
 ---
 
