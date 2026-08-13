@@ -114,6 +114,48 @@ class _SettingsViewState extends State<SettingsView> {
           ),
           const SizedBox(height: 12),
 
+          // 仮想ゲームパッド 詳細設定 Card
+          if (provider.config.outputMode == OutputMode.virtualGamepad) ...[
+            Card(
+              color: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '仮想ゲームパッド (Virtual Gamepad) について',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF162E45),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF38BDF8)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Color(0xFF38BDF8), size: 20),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '※ Windows で仮想 XInput/Xbox ゲームパッドとして認識させるには「ViGEmBus (Virtual Gamepad Emulation Bus)」ドライバーのインストールが必要です。ドライバー未アクセスの場合は「WASD キーボード」モードのご利用もお試しください。',
+                              style: TextStyle(color: Color(0xFFBAE6FD), fontSize: 11, height: 1.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           // WASD 詳細設定 Card
           if (provider.config.outputMode == OutputMode.keyboardWasd) ...[
             Card(
