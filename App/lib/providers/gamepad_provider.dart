@@ -117,6 +117,13 @@ class GamepadProvider extends ChangeNotifier {
   }
 
 
+  Locale get locale => _config.locale;
+
+  void setLocale(Locale locale) {
+    _config.locale = locale;
+    notifyListeners();
+  }
+
   void refreshPorts() {
     _availablePorts = SerialService.getAvailablePorts();
     if (_availablePorts.isNotEmpty && _config.selectedPort.isEmpty) {

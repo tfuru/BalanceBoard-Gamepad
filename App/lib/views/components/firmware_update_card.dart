@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/gamepad_provider.dart';
 import '../../models/github_release.dart';
@@ -24,6 +25,7 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final provider = Provider.of<GamepadProvider>(context);
 
     return Card(
@@ -38,9 +40,9 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
               children: [
                 const Icon(Icons.system_update_alt, color: Color(0xFF38BDF8)),
                 const SizedBox(width: 8),
-                const Text(
-                  'ファームウェア更新 (Tag指定書き込み)',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.fwUpdateTitle,
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 IconButton(
@@ -51,26 +53,21 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.refresh, color: Colors.white70),
-                  tooltip: 'Tag 一覧を再取得',
+                  tooltip: l10n.refreshReleases,
                   onPressed: provider.isFlashingFirmware
                       ? null
                       : () => provider.fetchGithubReleases(),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            const Text(
-              '※ GitHub Releases から Tag を選択して ESP32 へ直接書き込みを行います (ピュア Dart シリアル通信)。',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
             const SizedBox(height: 16),
 
             // Tag 選択ドロップダウン
             Row(
               children: [
-                const SizedBox(
-                  width: 90,
-                  child: Text('対象 Tag:', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                SizedBox(
+                  width: 110,
+                  child: Text(l10n.fwTagSelect, style: const TextStyle(color: Colors.white70, fontSize: 13)),
                 ),
                 Expanded(
                   child: Container(
@@ -86,8 +83,7 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
                             : (provider.releases.isNotEmpty ? provider.releases.first : null),
                         dropdownColor: const Color(0xFF0F172A),
                         isExpanded: true,
-                        hint: const Text('Tag を選択してください', style: TextStyle(color: Colors.white38)),
-
+                        hint: Text(l10n.tagSelectHint, style: const TextStyle(color: Colors.white38)),
                         items: provider.releases.map((release) {
                           final hasBin = release.firmwareAsset != null;
                           return DropdownMenuItem<GithubRelease>(
@@ -114,7 +110,7 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
                                       borderRadius: BorderRadius.circular(4),
                                       border: Border.all(color: Colors.greenAccent, width: 0.5),
                                     ),
-                                    child: const Text('BINあり', style: TextStyle(color: Colors.greenAccent, fontSize: 10)),
+                                    child: const Text('BIN', style: TextStyle(color: Colors.greenAccent, fontSize: 10)),
                                   ),
                               ],
                             ),
@@ -134,9 +130,9 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
             // 書き込み対象シリアルポート
             Row(
               children: [
-                const SizedBox(
-                  width: 90,
-                  child: Text('書き込み先:', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                SizedBox(
+                  width: 110,
+                  child: Text(l10n.targetPortSelect, style: const TextStyle(color: Colors.white70, fontSize: 13)),
                 ),
                 Expanded(
                   child: Container(
@@ -153,7 +149,7 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
                             : (provider.availablePorts.isNotEmpty ? provider.availablePorts.first : null),
                         dropdownColor: const Color(0xFF0F172A),
                         isExpanded: true,
-                        hint: const Text('ポートを選択', style: TextStyle(color: Colors.white38)),
+                        hint: Text(l10n.selectPortHint, style: const TextStyle(color: Colors.white38)),
                         items: provider.availablePorts.map((port) {
                           return DropdownMenuItem<String>(
                             value: port,
@@ -240,14 +236,14 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
                     : const Icon(Icons.flash_on),
                 label: Text(
                   provider.isFlashingFirmware
-                      ? '書き込み中... (${(provider.flashProgress * 100).toStringAsFixed(0)}%)'
-                      : 'ファームウェアを書き込む',
+                      ? '${l10n.flashingInProgress} (${(provider.flashProgress * 100).toStringAsFixed(0)}%)'
+                      : l10n.startFlashBtn,
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
                 onPressed: provider.isFlashingFirmware || provider.selectedRelease == null
                     ? null
                     : () {
-                        _showConfirmFlashDialog(context, provider);
+                        _showConfirmFlashDialog(context, provider, l10n);
                       },
               ),
             ),
@@ -257,25 +253,24 @@ class _FirmwareUpdateCardState extends State<FirmwareUpdateCard> {
     );
   }
 
-  void _showConfirmFlashDialog(BuildContext context, GamepadProvider provider) {
+  void _showConfirmFlashDialog(BuildContext context, GamepadProvider provider, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
-        title: const Text('ファームウェア書き込みの確認', style: TextStyle(color: Colors.white)),
+        title: Text(l10n.fwUpdateTitle, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Tag [${provider.selectedRelease?.tagName}] のファームウェアを Port [${provider.config.selectedPort}] へ書き込みます。\n\n'
-          '※ 書き込み中はシリアル通信が一時切断されます。実行してよろしいですか？',
+          'Tag [${provider.selectedRelease?.tagName}] -> Port [${provider.config.selectedPort}]',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
-            child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+            child: Text(l10n.cancel, style: const TextStyle(color: Colors.white54)),
             onPressed: () => Navigator.of(ctx).pop(),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0284C7)),
-            child: const Text('書き込み開始', style: TextStyle(color: Colors.white)),
+            child: Text(l10n.startFlashBtn, style: const TextStyle(color: Colors.white)),
             onPressed: () {
               Navigator.of(ctx).pop();
               provider.flashSelectedFirmware();

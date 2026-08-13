@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/app_config.dart';
 import '../../providers/gamepad_provider.dart';
@@ -9,6 +10,7 @@ class OutputStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final provider = Provider.of<GamepadProvider>(context);
     final mode = provider.config.outputMode;
 
@@ -31,7 +33,7 @@ class OutputStatusCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'リアルタイム出力モニター (${mode.label})',
+                'Monitor (${mode.getLocalizedLabel(l10n)})',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
@@ -41,7 +43,7 @@ class OutputStatusCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          _buildModeContent(context, provider, mode),
+          _buildModeContent(context, provider, mode, l10n),
         ],
       ),
     );
@@ -73,7 +75,7 @@ class OutputStatusCard extends StatelessWidget {
     }
   }
 
-  Widget _buildModeContent(BuildContext context, GamepadProvider provider, OutputMode mode) {
+  Widget _buildModeContent(BuildContext context, GamepadProvider provider, OutputMode mode, AppLocalizations l10n) {
     switch (mode) {
       case OutputMode.keyboardWasd:
         return _buildWasdMonitor(provider);
@@ -82,12 +84,12 @@ class OutputStatusCard extends StatelessWidget {
       case OutputMode.virtualGamepad:
         return _buildGamepadMonitor(provider);
       case OutputMode.none:
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Center(
             child: Text(
-              '出力中継は停止しています（デバッグ表示のみ）',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
+              l10n.modeNoneDesc,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
           ),
         );
@@ -198,14 +200,14 @@ class OutputStatusCard extends StatelessWidget {
 
   String _getActiveKeyText(dynamic kb, bool isJumping) {
     final activeKeys = <String>[];
-    if (kb.isWPressed) activeKeys.add('W (前進)');
-    if (kb.isAPressed) activeKeys.add('A (左傾)');
-    if (kb.isSPressed) activeKeys.add('S (後退)');
-    if (kb.isDPressed) activeKeys.add('D (右傾)');
-    if (isJumping) activeKeys.add('Space (🦘ジャンプ)');
+    if (kb.isWPressed) activeKeys.add('W');
+    if (kb.isAPressed) activeKeys.add('A');
+    if (kb.isSPressed) activeKeys.add('S');
+    if (kb.isDPressed) activeKeys.add('D');
+    if (isJumping) activeKeys.add('Space (Jump)');
 
-    if (activeKeys.isEmpty) return 'キー押下なし (ニュートラル)';
-    return '押下中: ${activeKeys.join(" + ")}';
+    if (activeKeys.isEmpty) return 'Neutral';
+    return 'Active: ${activeKeys.join(" + ")}';
   }
 
   /// OSC 送信モニター
@@ -218,13 +220,13 @@ class OutputStatusCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '送信先: ${provider.config.oscHost}:${provider.config.oscPort} (UDP)',
+          'Target: ${provider.config.oscHost}:${provider.config.oscPort} (UDP)',
           style: const TextStyle(color: Colors.white54, fontSize: 11),
         ),
         const SizedBox(height: 8),
-        _buildValueBar('/input/Horizontal (左右)', oscX, const Color(0xFF10B981)),
+        _buildValueBar('/input/Horizontal', oscX, const Color(0xFF10B981)),
         const SizedBox(height: 6),
-        _buildValueBar('/input/Vertical (前後)', oscY, const Color(0xFF10B981)),
+        _buildValueBar('/input/Vertical', oscY, const Color(0xFF10B981)),
         const SizedBox(height: 6),
         Row(
           children: [
@@ -239,7 +241,7 @@ class OutputStatusCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                isJumping ? '1 (🦘 JUMP)' : '0 (OFF)',
+                isJumping ? '1 (JUMP)' : '0 (OFF)',
                 style: TextStyle(
                   color: isJumping ? Colors.white : Colors.white54,
                   fontSize: 11,
@@ -263,19 +265,19 @@ class OutputStatusCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '仮想 XInput コントローラー出力中',
+          'Virtual XInput Controller Output',
           style: TextStyle(color: Colors.white54, fontSize: 11),
         ),
         const SizedBox(height: 8),
-        _buildValueBar('L-Stick X 軸', gpX, const Color(0xFF38BDF8)),
+        _buildValueBar('L-Stick X', gpX, const Color(0xFF38BDF8)),
         const SizedBox(height: 6),
-        _buildValueBar('L-Stick Y 軸', gpY, const Color(0xFF38BDF8)),
+        _buildValueBar('L-Stick Y', gpY, const Color(0xFF38BDF8)),
         const SizedBox(height: 6),
         Row(
           children: [
             const SizedBox(
               width: 140,
-              child: Text('A ボタン (Jump)', style: TextStyle(color: Colors.white70, fontSize: 11)),
+              child: Text('A Button (Jump)', style: TextStyle(color: Colors.white70, fontSize: 11)),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -297,7 +299,6 @@ class OutputStatusCard extends StatelessWidget {
       ],
     );
   }
-
 
   Widget _buildValueBar(String label, double value, Color activeColor) {
     return Row(

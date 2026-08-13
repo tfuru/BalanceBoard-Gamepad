@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:window_size/window_size.dart';
 import 'providers/gamepad_provider.dart';
@@ -27,9 +29,19 @@ class BalanceBoardApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<GamepadProvider>(context);
+
     return MaterialApp(
       title: 'BalanceBoard Gamepad Relay',
       debugShowCheckedModeBanner: false,
+      locale: provider.locale,
+      localizationsDelegates: const [
+        ...AppLocalizations.localizationsDelegates,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0B0F19),
         colorScheme: const ColorScheme.dark(
@@ -42,3 +54,4 @@ class BalanceBoardApp extends StatelessWidget {
     );
   }
 }
+

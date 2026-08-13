@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/gamepad_provider.dart';
@@ -15,6 +16,7 @@ class AppVersionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final provider = Provider.of<GamepadProvider>(context);
     final latest = provider.latestAppRelease;
     final isChecking = provider.isCheckingUpdate;
@@ -39,9 +41,9 @@ class AppVersionCard extends StatelessWidget {
                 color: provider.hasAppUpdate ? const Color(0xFF10B981) : const Color(0xFF38BDF8),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'アプリ＆ファームウェア バージョン確認',
-                style: TextStyle(
+              Text(
+                l10n.appVersionTitle,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -60,7 +62,7 @@ class AppVersionCard extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : const Icon(Icons.sync, size: 16),
-                label: Text(isChecking ? '確認中...' : 'バージョン確認'),
+                label: Text(isChecking ? l10n.checkingUpdate : l10n.checkUpdateBtn),
                 onPressed: isChecking ? null : () => provider.checkAppUpdate(),
               ),
             ],
@@ -68,11 +70,11 @@ class AppVersionCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              _buildVersionBadge('現在のアプリ', 'v${GamepadProvider.currentAppVersion}', Colors.white70),
+              _buildVersionBadge(l10n.currentVersion, 'v${GamepadProvider.currentAppVersion}', Colors.white70),
               const SizedBox(width: 16),
               if (latest != null)
                 _buildVersionBadge(
-                  'GitHub 最新Tag',
+                  l10n.latestVersion,
                   latest.tagName,
                   provider.hasAppUpdate ? const Color(0xFF10B981) : Colors.white70,
                 ),
@@ -102,7 +104,7 @@ class AppVersionCard extends StatelessWidget {
                   ),
                   TextButton.icon(
                     icon: const Icon(Icons.open_in_new, size: 14, color: Color(0xFF38BDF8)),
-                    label: const Text('GitHub で確認', style: TextStyle(color: Color(0xFF38BDF8), fontSize: 12)),
+                    label: const Text('GitHub', style: TextStyle(color: Color(0xFF38BDF8), fontSize: 12)),
                     onPressed: _openGitHubReleases,
                   ),
                 ],
