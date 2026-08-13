@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/sensor_data.dart';
 import '../models/app_config.dart';
 import '../services/serial_service.dart';
@@ -12,6 +13,14 @@ import '../services/jump_detector.dart';
 import '../models/github_release.dart';
 import '../services/github_release_service.dart';
 import '../services/esptool_flasher_service.dart';
+
+enum SerialStatusState {
+  disconnected,
+  noPortSelected,
+  connected,
+  connectFailed,
+  disconnectComplete,
+}
 
 class GamepadProvider extends ChangeNotifier {
   final SerialService _serialService = SerialService();
@@ -27,7 +36,7 @@ class GamepadProvider extends ChangeNotifier {
   final AppConfig _config = AppConfig();
   List<String> _availablePorts = [];
   bool _isSerialConnected = false;
-  String _statusMessage = '未接続';
+  SerialStatusState _statusState = SerialStatusState.disconnected;
 
   // ファームウェア更新状態
   List<GithubRelease> _releases = [];
@@ -74,7 +83,37 @@ class GamepadProvider extends ChangeNotifier {
   AppConfig get config => _config;
   List<String> get availablePorts => _availablePorts;
   bool get isSerialConnected => _isSerialConnected;
-  String get statusMessage => _statusMessage;
+  SerialStatusState get statusState => _statusState;
+
+  String getStatusMessage(AppLocalizations l10n) {
+    switch (_statusState) {
+      case SerialStatusState.disconnected:
+        return l10n.disconnected;
+      case SerialStatusState.noPortSelected:
+        return l10n.noPortSelected;
+      case SerialStatusState.connected:
+        return '${l10n.connected}: ${_config.selectedPort}';
+      case SerialStatusState.connectFailed:
+        return '${l10n.connectFailed}: ${_config.selectedPort}';
+      case SerialStatusState.disconnectComplete:
+        return l10n.disconnectComplete;
+    }
+  }
+
+  String get statusMessage {
+    switch (_statusState) {
+      case SerialStatusState.disconnected:
+        return '未接続';
+      case SerialStatusState.noPortSelected:
+        return 'シリアルポートが選択されていません';
+      case SerialStatusState.connected:
+        return '接続中: ${_config.selectedPort}';
+      case SerialStatusState.connectFailed:
+        return '接続失敗: ${_config.selectedPort}';
+      case SerialStatusState.disconnectComplete:
+        return '切断完了';
+    }
+  }
   KeyboardService get keyboardService => _keyboardService;
   bool get isJumping => _jumpDetector.isJumping;
 
@@ -116,6 +155,13 @@ class GamepadProvider extends ChangeNotifier {
     checkAppUpdate();
   }
 
+
+  Locale get locale => _config.locale;
+
+  void setLocale(Locale locale) {
+    _config.locale = locale;
+    notifyListeners();
+  }
 
   void refreshPorts() {
     _availablePorts = SerialService.getAvailablePorts();
@@ -198,7 +244,7 @@ class GamepadProvider extends ChangeNotifier {
 
   bool connect() {
     if (_config.selectedPort.isEmpty) {
-      _statusMessage = 'シリアルポートが選択されていません';
+      _statusState = SerialStatusState.noPortSelected;
       notifyListeners();
       return false;
     }
@@ -206,7 +252,7 @@ class GamepadProvider extends ChangeNotifier {
     bool success = _serialService.connect(_config.selectedPort, baudRate: _config.baudRate);
     if (success) {
       _isSerialConnected = true;
-      _statusMessage = '接続中: ${_config.selectedPort}';
+      _statusState = SerialStatusState.connected;
 
       _dataSubscription?.cancel();
       _dataSubscription = _serialService.dataStream.listen((rawJson) {
@@ -217,7 +263,7 @@ class GamepadProvider extends ChangeNotifier {
       });
     } else {
       _isSerialConnected = false;
-      _statusMessage = '接続失敗: ${_config.selectedPort}';
+      _statusState = SerialStatusState.connectFailed;
     }
 
     notifyListeners();
@@ -338,7 +384,7 @@ class GamepadProvider extends ChangeNotifier {
     _jumpDetector.reset();
     _isSerialConnected = false;
     _currentData = const SensorData();
-    _statusMessage = '切断完了';
+    _statusState = SerialStatusState.disconnectComplete;
     notifyListeners();
   }
 

@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 class HelpView extends StatelessWidget {
   const HelpView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F19),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E293B),
-        title: const Text(
-          '接続手順 & ヘルプ',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          l10n.helpTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: ListView(
@@ -29,14 +32,14 @@ class HelpView extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.info_outline, color: Color(0xFF38BDF8), size: 32),
-                SizedBox(width: 12),
+                const Icon(Icons.info_outline, color: Color(0xFF38BDF8), size: 32),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Wii Balance Board と ESP32 を接続し、常駐アプリへデータを取り込むための手順案内です。',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                    l10n.helpSection1Body,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ),
               ],
@@ -45,143 +48,103 @@ class HelpView extends StatelessWidget {
           const SizedBox(height: 20),
 
           // セクションタイトル
-          const Text(
-            '接続ステップ Guide',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            l10n.helpSection2Title,
+            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
 
           _buildStepCard(
             stepNumber: 1,
             icon: Icons.usb,
-            title: 'ESP32 を PC と接続',
-            description: 'ESP32 開発ボード (Adafruit HUZZAH32 / Freenove ESP32-WROVER 等) を USB ケーブルで PC に接続します。',
+            title: l10n.helpSection2Step1,
+            description: '',
           ),
           _buildStepCard(
             stepNumber: 2,
             icon: Icons.settings_input_hdmi,
-            title: 'COM ポート / シリアル名を確認',
-            description: 'アプリのドロップダウンメニューに接続中のシリアルポート名（例: /dev/cu.usbserial-... や COM3）が表示されているか確認します。',
+            title: l10n.helpSection2Step2,
+            description: '',
           ),
           _buildStepCard(
             stepNumber: 3,
             icon: Icons.sports_esports,
-            title: 'Wii Balance Board の SYNC ボタンを押す',
-            description: 'Balance Board の電池ケース蓋を外し、裏面の赤い SYNC ボタンを押します。表の青色 LED が点滅しペアリング受付状態になります。',
+            title: l10n.helpSection2Step3,
+            description: '',
           ),
-          _buildStepCard(
-            stepNumber: 4,
-            icon: Icons.link,
-            title: '常駐アプリでシリアル指定・接続',
-            description: 'アプリ画面で認識されたシリアルポートを選択し、「接続」ボタンを押します。ESP32 が自動的に Balance Board を検出・接続します。',
+
+          const SizedBox(height: 24),
+
+          // 出力モード
+          Text(
+            l10n.helpSection3Title,
+            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          _buildStepCard(
-            stepNumber: 5,
-            icon: Icons.scale,
-            title: '0点 (Tare) リセットの実行',
-            description: 'Wii Balance Board に何も乗っていない状態で、画面下の「Tare (零点リセット)」ボタンを押し、合計重量を 0.0kg に初期化します。',
-          ),
-          _buildStepCard(
-            stepNumber: 6,
-            icon: Icons.directions_run,
-            title: '乗下荷・動作確認',
-            description: 'Wii Balance Board に乗り、体重移動を行って画面の 4 隅圧力インジケーターおよび 2D 重心ドットが追従することを確認します。',
+          const SizedBox(height: 12),
+
+          Card(
+            color: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.helpSection3Osc,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.helpSection3Wasd,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+                  ),
+                ],
+              ),
+            ),
           ),
 
           const SizedBox(height: 24),
 
           // トラブルシューティング
-          const Text(
-            'トラブルシューティング Tips',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            l10n.helpSection4Title,
+            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
 
           Card(
             color: const Color(0xFF1E293B),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: const Padding(
-              padding: EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
                       Icon(Icons.warning_amber_rounded, color: Colors.amber),
                       SizedBox(width: 8),
                       Text(
-                        '接続できない / データが変わらない場合',
+                        'Troubleshooting',
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    '・ターミナル等で make monitor が起動中だと、シリアルポートが排他ロックされアプリで受信できません。make monitor を停止してください。\n'
-                    '・ペアリングが成功しない場合は、Balance Board の電池を抜いて数秒待ってから再セットし、SYNC ボタンを押してください。',
-                    style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+                    l10n.helpSection4Item1,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.helpSection4Item2,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
                   ),
                 ],
               ),
             ),
           ),
-          Card(
-            color: const Color(0xFF1E293B),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: const Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.sports_esports, color: Color(0xFF38BDF8)),
-                      SizedBox(width: 8),
-                      Text(
-                        'Windows で仮想ゲームパッドが認識されない場合',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '・Windows で XInput 仮想ゲームパッドとして認識させるには「ViGEmBus (Virtual Gamepad Emulation Bus)」ドライバーのインストールが必要です。\n'
-                    '・ドライバー未導入時や動作しない場合は、設定画面で出力モードを「WASD キーボード」モードに切り替えることで、直ちに PC キーボード入力として操作可能です。',
-                    style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            color: const Color(0xFF1E293B),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: const Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.keyboard, color: Color(0xFFF59E0B)),
-                      SizedBox(width: 8),
-                      Text(
-                        'Windows PCゲームに WASD/Space が届かない場合',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '・ゲームアプリや Steam ランチャーが管理者権限で動作している場合、Windows セキュリティ (UIPI) によりキー入力がブロックされます。本中継アプリ (balance_board_app.exe) も右クリックして「管理者として実行」で起動してください。',
-                    style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
         ],
       ),
     );
@@ -240,22 +203,24 @@ class HelpView extends StatelessWidget {
                           title,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 15,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      height: 1.4,
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

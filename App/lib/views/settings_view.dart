@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../providers/gamepad_provider.dart';
 import '../models/app_config.dart';
@@ -33,17 +34,62 @@ class _SettingsViewState extends State<SettingsView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final provider = Provider.of<GamepadProvider>(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F19),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E293B),
-        title: const Text('詳細設定 & キャリブレーション'),
+        title: Text(l10n.settingsTitle),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // 言語切替 Card
+          Card(
+            color: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.language, color: Color(0xFF38BDF8)),
+                      const SizedBox(width: 10),
+                      Text(
+                        l10n.languageSetting,
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  DropdownButton<Locale>(
+                    dropdownColor: const Color(0xFF1E293B),
+                    value: provider.locale,
+                    underline: const SizedBox(),
+                    items: const [
+                      DropdownMenuItem(
+                        value: Locale('ja'),
+                        child: Text('日本語 (Japanese)', style: TextStyle(color: Colors.white)),
+                      ),
+                      DropdownMenuItem(
+                        value: Locale('en'),
+                        child: Text('English', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                    onChanged: (locale) {
+                      if (locale != null) {
+                        provider.setLocale(locale);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           const AppVersionCard(),
           const SizedBox(height: 12),
           const FirmwareUpdateCard(),
@@ -58,19 +104,14 @@ class _SettingsViewState extends State<SettingsView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '出力モード選択',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '※ OSC as Input Controller モードを ON にすると、仮想ゲームパッド出力は OFF になります。',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  Text(
+                    l10n.outputModeSetting,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   RadioListTile<OutputMode>(
-                    title: const Text('仮想ゲームパッド (Virtual Gamepad)', style: TextStyle(color: Colors.white)),
-                    subtitle: const Text('PC ゲーム用のゲームパッドとして入力中継', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    title: Text(OutputMode.virtualGamepad.getLocalizedLabel(l10n), style: const TextStyle(color: Colors.white)),
+                    subtitle: Text(l10n.modeVirtualGamepadDesc, style: const TextStyle(color: Colors.white54, fontSize: 11)),
                     value: OutputMode.virtualGamepad,
                     groupValue: provider.config.outputMode,
                     activeColor: const Color(0xFF38BDF8),
@@ -79,8 +120,8 @@ class _SettingsViewState extends State<SettingsView> {
                     },
                   ),
                   RadioListTile<OutputMode>(
-                    title: const Text('OSC as Input Controller (VRChat用)', style: TextStyle(color: Colors.white)),
-                    subtitle: const Text('VRChat (/input/Horizontal, /input/Vertical) へ UDP 送信', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    title: Text(OutputMode.oscInputController.getLocalizedLabel(l10n), style: const TextStyle(color: Colors.white)),
+                    subtitle: Text(l10n.modeOscDesc, style: const TextStyle(color: Colors.white54, fontSize: 11)),
                     value: OutputMode.oscInputController,
                     groupValue: provider.config.outputMode,
                     activeColor: const Color(0xFF10B981),
@@ -89,8 +130,8 @@ class _SettingsViewState extends State<SettingsView> {
                     },
                   ),
                   RadioListTile<OutputMode>(
-                    title: const Text('WASD キーボード (WASD Keyboard)', style: TextStyle(color: Colors.white)),
-                    subtitle: const Text('重心移動を W, A, S, D キーの押下に直接変換', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    title: Text(OutputMode.keyboardWasd.getLocalizedLabel(l10n), style: const TextStyle(color: Colors.white)),
+                    subtitle: Text(l10n.modeWasdDesc, style: const TextStyle(color: Colors.white54, fontSize: 11)),
                     value: OutputMode.keyboardWasd,
                     groupValue: provider.config.outputMode,
                     activeColor: const Color(0xFFF59E0B),
@@ -99,8 +140,8 @@ class _SettingsViewState extends State<SettingsView> {
                     },
                   ),
                   RadioListTile<OutputMode>(
-                    title: const Text('出力 OFF', style: TextStyle(color: Colors.white)),
-                    subtitle: const Text('モニター画面のみ（入力中継なし）', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    title: Text(OutputMode.none.getLocalizedLabel(l10n), style: const TextStyle(color: Colors.white)),
+                    subtitle: Text(l10n.modeNoneDesc, style: const TextStyle(color: Colors.white54, fontSize: 11)),
                     value: OutputMode.none,
                     groupValue: provider.config.outputMode,
                     activeColor: Colors.grey,
@@ -114,48 +155,6 @@ class _SettingsViewState extends State<SettingsView> {
           ),
           const SizedBox(height: 12),
 
-          // 仮想ゲームパッド 詳細設定 Card
-          if (provider.config.outputMode == OutputMode.virtualGamepad) ...[
-            Card(
-              color: const Color(0xFF1E293B),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '仮想ゲームパッド (Virtual Gamepad) について',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF162E45),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF38BDF8)),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.info_outline, color: Color(0xFF38BDF8), size: 20),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '※ Windows で仮想 XInput/Xbox ゲームパッドとして認識させるには「ViGEmBus (Virtual Gamepad Emulation Bus)」ドライバーのインストールが必要です。ドライバー未アクセスの場合は「WASD キーボード」モードのご利用もお試しください。',
-                              style: TextStyle(color: Color(0xFFBAE6FD), fontSize: 11, height: 1.4),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
           // WASD 詳細設定 Card
           if (provider.config.outputMode == OutputMode.keyboardWasd) ...[
             Card(
@@ -166,38 +165,17 @@ class _SettingsViewState extends State<SettingsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'WASD キーボード設定',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF332A15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFF59E0B)),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.accessibility_new, color: Color(0xFFF59E0B), size: 20),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'macOS で他のアプリに WASD キーを送るには「システム設定 > プライバシーとセキュリティ > アクセシビリティ」で権限を許可する必要があります。',
-                              style: TextStyle(color: Color(0xFFFDE68A), fontSize: 11),
-                            ),
-                          ),
-                        ],
-                      ),
+                    Text(
+                      l10n.wasdDetailSetting,
+                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'キー入力反応しきい値 (Threshold)',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        Text(
+                          l10n.wasdThreshold,
+                          style: const TextStyle(color: Colors.white, fontSize: 14),
                         ),
                         Text(
                           provider.config.wasdThreshold.toStringAsFixed(2),
@@ -215,15 +193,15 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const SizedBox(height: 8),
                     SwitchListTile(
-                      title: const Text('A/D (左右) 反転', style: TextStyle(color: Colors.white)),
+                      title: Text(l10n.invertWasdX, style: const TextStyle(color: Colors.white)),
                       value: provider.config.invertWasdX,
-                      activeColor: const Color(0xFFF59E0B),
+                      activeThumbColor: const Color(0xFFF59E0B),
                       onChanged: (val) => provider.setInvertWasdX(val),
                     ),
                     SwitchListTile(
-                      title: const Text('W/S (前後) 反転', style: TextStyle(color: Colors.white)),
+                      title: Text(l10n.invertWasdY, style: const TextStyle(color: Colors.white)),
                       value: provider.config.invertWasdY,
-                      activeColor: const Color(0xFFF59E0B),
+                      activeThumbColor: const Color(0xFFF59E0B),
                       onChanged: (val) => provider.setInvertWasdY(val),
                     ),
                   ],
@@ -232,7 +210,6 @@ class _SettingsViewState extends State<SettingsView> {
             ),
             const SizedBox(height: 12),
           ],
-
 
           // OSC 詳細設定 Card
           if (provider.config.outputMode == OutputMode.oscInputController) ...[
@@ -244,9 +221,9 @@ class _SettingsViewState extends State<SettingsView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'OSC 送信設定 (VRChat)',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    Text(
+                      l10n.oscDetailSetting,
+                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -256,10 +233,10 @@ class _SettingsViewState extends State<SettingsView> {
                           child: TextField(
                             controller: _hostController,
                             style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              labelText: '送信先 IP アドレス',
-                              labelStyle: TextStyle(color: Colors.white70),
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: l10n.oscHost,
+                              labelStyle: const TextStyle(color: Colors.white70),
+                              border: const OutlineInputBorder(),
                             ),
                             onChanged: (val) {
                               if (val.trim().isNotEmpty) {
@@ -275,10 +252,10 @@ class _SettingsViewState extends State<SettingsView> {
                             controller: _portController,
                             keyboardType: TextInputType.number,
                             style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              labelText: 'ポート',
-                              labelStyle: TextStyle(color: Colors.white70),
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: l10n.oscPort,
+                              labelStyle: const TextStyle(color: Colors.white70),
+                              border: const OutlineInputBorder(),
                             ),
                             onChanged: (val) {
                               final port = int.tryParse(val.trim());
@@ -292,15 +269,15 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
-                      title: const Text('左右軸 (Horizontal) 反転', style: TextStyle(color: Colors.white)),
+                      title: Text(l10n.invertOscX, style: const TextStyle(color: Colors.white)),
                       value: provider.config.invertOscX,
-                      activeColor: const Color(0xFF10B981),
+                      activeThumbColor: const Color(0xFF10B981),
                       onChanged: (val) => provider.setInvertOscX(val),
                     ),
                     SwitchListTile(
-                      title: const Text('前後軸 (Vertical) 反転', style: TextStyle(color: Colors.white)),
+                      title: Text(l10n.invertOscY, style: const TextStyle(color: Colors.white)),
                       value: provider.config.invertOscY,
-                      activeColor: const Color(0xFF10B981),
+                      activeThumbColor: const Color(0xFF10B981),
                       onChanged: (val) => provider.setInvertOscY(val),
                     ),
                   ],
@@ -322,36 +299,31 @@ class _SettingsViewState extends State<SettingsView> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.unfold_more, color: Color(0xFFEC4899), size: 20),
-                          SizedBox(width: 8),
+                          const Icon(Icons.unfold_more, color: Color(0xFFEC4899), size: 20),
+                          const SizedBox(width: 8),
                           Text(
-                            'ジャンプ検出機能 (Jump Detection)',
-                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                            l10n.jumpSetting,
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
                       Switch(
                         value: provider.config.enableJump,
-                        activeColor: const Color(0xFFEC4899),
+                        activeThumbColor: const Color(0xFFEC4899),
                         onChanged: (val) => provider.setEnableJump(val),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'ボード上で跳び上がった（足が離れた / 荷重が抜けた）瞬間を自動検知してジャンプ信号を発行します。',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                   if (provider.config.enableJump) ...[
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          '判定荷重閾値 (この重量以下でジャンプ)',
-                          style: TextStyle(color: Colors.white, fontSize: 13),
+                        Text(
+                          l10n.jumpThreshold,
+                          style: const TextStyle(color: Colors.white, fontSize: 13),
                         ),
                         Text(
                           '${provider.config.jumpThresholdKg.toStringAsFixed(1)} kg',
@@ -385,9 +357,9 @@ class _SettingsViewState extends State<SettingsView> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'デッドゾーン (遊び)',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      Text(
+                        l10n.deadzone,
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         provider.config.deadzone.toStringAsFixed(2),
@@ -423,9 +395,9 @@ class _SettingsViewState extends State<SettingsView> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        '感度倍率 (Sensitivity)',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      Text(
+                        l10n.sensitivity,
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         '${provider.config.sensitivity.toStringAsFixed(1)}x',
@@ -454,7 +426,7 @@ class _SettingsViewState extends State<SettingsView> {
             color: const Color(0xFF1E293B),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListTile(
-              title: const Text('ボーレート', style: TextStyle(color: Colors.white)),
+              title: const Text('Baud Rate', style: TextStyle(color: Colors.white)),
               subtitle: Text('${provider.config.baudRate} bps', style: const TextStyle(color: Colors.white54)),
               trailing: const Icon(Icons.speed, color: Color(0xFF38BDF8)),
             ),

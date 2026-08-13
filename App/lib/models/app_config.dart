@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
+
 enum OutputMode {
   virtualGamepad,
   oscInputController,
@@ -18,9 +21,23 @@ extension OutputModeExtension on OutputMode {
         return '出力 OFF';
     }
   }
+
+  String getLocalizedLabel(AppLocalizations l10n) {
+    switch (this) {
+      case OutputMode.virtualGamepad:
+        return l10n.modeLabelVirtualGamepad;
+      case OutputMode.oscInputController:
+        return l10n.modeLabelOscInput;
+      case OutputMode.keyboardWasd:
+        return l10n.modeLabelWasd;
+      case OutputMode.none:
+        return l10n.modeLabelNone;
+    }
+  }
 }
 
 class AppConfig {
+  Locale locale;
   String selectedPort;
   int baudRate;
   double sensitivity;
@@ -45,12 +62,13 @@ class AppConfig {
   int jumpHoldMs;
 
   AppConfig({
+    this.locale = const Locale('en'),
     this.selectedPort = '',
     this.baudRate = 115200,
     this.sensitivity = 1.0,
     this.deadzone = 0.05,
     this.autoConnect = false,
-    this.outputMode = OutputMode.none,
+    this.outputMode = OutputMode.virtualGamepad,
 
     this.oscHost = '127.0.0.1',
     this.oscPort = 9000,

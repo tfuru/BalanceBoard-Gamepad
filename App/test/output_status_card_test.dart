@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:balance_board_app/l10n/app_localizations.dart';
 import 'package:balance_board_app/models/app_config.dart';
 import 'package:balance_board_app/providers/gamepad_provider.dart';
 import 'package:balance_board_app/views/components/output_status_card.dart';
@@ -11,6 +13,14 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('ja'),
+        localizationsDelegates: const [
+          ...AppLocalizations.localizationsDelegates,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: ChangeNotifierProvider<GamepadProvider>.value(
             value: provider,

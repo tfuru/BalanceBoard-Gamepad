@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../models/app_config.dart';
 import '../providers/gamepad_provider.dart';
@@ -7,13 +8,12 @@ import 'components/output_status_card.dart';
 import 'help_view.dart';
 import 'settings_view.dart';
 
-
-
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final provider = Provider.of<GamepadProvider>(context);
     final data = provider.currentData;
 
@@ -21,20 +21,20 @@ class DashboardView extends StatelessWidget {
       backgroundColor: const Color(0xFF0B0F19),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E293B),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.sports_esports, color: Color(0xFF38BDF8)),
-            SizedBox(width: 10),
+            const Icon(Icons.sports_esports, color: Color(0xFF38BDF8)),
+            const SizedBox(width: 10),
             Text(
-              'BalanceBoard Gamepad Relay',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              l10n.appTitle,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline, color: Colors.white70),
-            tooltip: '接続手順・ヘルプ',
+            tooltip: l10n.helpTooltip,
             onPressed: () {
               Navigator.push(
                 context,
@@ -44,7 +44,7 @@ class DashboardView extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.white70),
-            tooltip: '設定',
+            tooltip: l10n.settingsTooltip,
             onPressed: () {
               Navigator.push(
                 context,
@@ -77,7 +77,7 @@ class DashboardView extends StatelessWidget {
                                 provider.availablePorts.contains(provider.config.selectedPort)
                             ? provider.config.selectedPort
                             : null,
-                        hint: const Text('COMポート選択', style: TextStyle(color: Colors.white54)),
+                        hint: Text(l10n.selectPortHint, style: const TextStyle(color: Colors.white54)),
                         items: provider.availablePorts.map((port) {
                           return DropdownMenuItem<String>(
                             value: port,
@@ -92,6 +92,7 @@ class DashboardView extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.refresh, color: Colors.white70),
+                        tooltip: l10n.refreshPortsTooltip,
                         onPressed: provider.isSerialConnected ? null : provider.refreshPorts,
                       ),
                       const Spacer(),
@@ -103,7 +104,7 @@ class DashboardView extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         ),
                         icon: Icon(provider.isSerialConnected ? Icons.link_off : Icons.link),
-                        label: Text(provider.isSerialConnected ? '切断' : '接続'),
+                        label: Text(provider.isSerialConnected ? l10n.disconnectBtn : l10n.connectBtn),
                         onPressed: () {
                           if (provider.isSerialConnected) {
                             provider.disconnect();
@@ -120,7 +121,7 @@ class DashboardView extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'ステータス: ${provider.statusMessage}',
+                          'Status: ${provider.getStatusMessage(l10n)}',
                           style: TextStyle(
                             color: provider.isSerialConnected ? const Color(0xFF10B981) : Colors.white60,
                             fontSize: 12,
@@ -132,7 +133,6 @@ class DashboardView extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('出力モード: ', style: TextStyle(color: Colors.white70, fontSize: 12)),
                           DropdownButton<OutputMode>(
                             dropdownColor: const Color(0xFF1E293B),
                             value: provider.config.outputMode,
@@ -142,7 +142,7 @@ class DashboardView extends StatelessWidget {
                               return DropdownMenuItem<OutputMode>(
                                 value: mode,
                                 child: Text(
-                                  mode.label,
+                                  mode.getLocalizedLabel(l10n),
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
@@ -182,7 +182,9 @@ class DashboardView extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    data.isConnected ? '● Balance Board 接続中' : '○ Balance Board 未接続',
+                    data.isConnected
+                        ? '● Balance Board ${l10n.connected}'
+                        : '○ Balance Board ${l10n.disconnected}',
                     style: TextStyle(
                       color: data.isConnected ? const Color(0xFF10B981) : Colors.grey,
                       fontWeight: FontWeight.bold,
@@ -210,9 +212,9 @@ class DashboardView extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildMetricChip('合計重量', '${data.weightKg.toStringAsFixed(1)} kg'),
-                      _buildMetricChip('X 軸', data.centerX.toStringAsFixed(2)),
-                      _buildMetricChip('Y 軸', data.centerY.toStringAsFixed(2)),
+                      _buildMetricChip(l10n.totalWeight, '${data.weightKg.toStringAsFixed(1)} kg'),
+                      _buildMetricChip('X Axis', data.centerX.toStringAsFixed(2)),
+                      _buildMetricChip('Y Axis', data.centerY.toStringAsFixed(2)),
                     ],
                   ),
                 ],
@@ -237,9 +239,9 @@ class DashboardView extends StatelessWidget {
                   ),
                 ),
                 icon: const Icon(Icons.scale),
-                label: const Text(
-                  'Tare (零点リセット)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                label: Text(
+                  l10n.tareBtn,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 onPressed: provider.isSerialConnected ? provider.sendTareCommand : null,
               ),
@@ -247,7 +249,6 @@ class DashboardView extends StatelessWidget {
           ],
         ),
       ),
-
     );
   }
 
