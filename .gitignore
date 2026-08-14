@@ -38,3 +38,17 @@ App/linux/flutter/ephemeral/
 # Environment / Secrets
 .env
 .env.*
+
+# Raw Media / Large Working Files (assets)
+*.raw
+*.cr2
+*.cr3
+*.nef
+*.arw
+*.dng
+*.psd
+*.ai
+*.blend
+*.mov
+*.mp4
+*.mkv
