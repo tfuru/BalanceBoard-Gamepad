@@ -108,12 +108,20 @@ BalanceBoard-Gamepad/
 │   ├── Makefile            # Makefile for PlatformIO operations
 │   ├── README.md           # Firmware details documentation
 │   └── ...
-└── App/                    # PC background companion app (Flutter)
-    ├── README.md           # Companion app details documentation
+├── App/                    # PC background companion app (Flutter)
+│   ├── README.md           # Companion app details documentation
+│   └── ...
+├── Casing/                 # 3D printable case design files (OpenSCAD / STL)
+│   ├── README.md           # Case specifications & print guidelines
+│   └── ...
+├── Assets/                 # Project media assets (Photos, UI screenshots, Logos)
+│   └── README.md           # Assets management guidelines
+└── Shop/                   # Store listing assets & distribution information
+    ├── README.md           # Store overview
     └── ...
 ```
 
-- For detailed component documentation, refer to the [Firmware README](./Firmware/README.md) and [App README](./App/README.md).
+- For detailed component documentation, refer to the [Firmware README](./Firmware/README.md), [App README](./App/README.md), [Casing README](./Casing/README.md), [Assets README](./Assets/README.md), and [Shop README](./Shop/README.md).
 
 ---
 

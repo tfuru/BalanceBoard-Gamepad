@@ -109,12 +109,20 @@ BalanceBoard-Gamepad/
 │   ├── Makefile            # PlatformIO 操作用 Makefile
 │   ├── README.md           # ファームウェア詳細ドキュメント
 │   └── ...
-└── App/                    # PC常駐中継アプリケーション (Flutter)
-    ├── README.md           # 常駐中継アプリ詳細ドキュメント
+├── App/                    # PC常駐中継アプリケーション (Flutter)
+│   ├── README.md           # 常駐中継アプリ詳細ドキュメント
+│   └── ...
+├── Casing/                 # 3Dプリント用ケース設計データ (OpenSCAD / STL)
+│   ├── README.md           # ケース仕様・推奨プリント設定
+│   └── ...
+├── Assets/                 # プロジェクト各種メディア素材 (写真・UIスクショ・ロゴ)
+│   └── README.md           # 素材管理ガイドライン
+└── Shop/                   # ショップ出品用アセット・販売向け情報
+    ├── README.md           # ショップ共通概要
     └── ...
 ```
 
-- 各コンポーネントの詳細は [ファームウェア README](./Firmware/README.md) および [常駐中継アプリ README](./App/README.md) を参照してください。
+- 各コンポーネントの詳細は [ファームウェア README](./Firmware/README.md)、[常駐中継アプリ README](./App/README.md)、[ケース設計 README](./Casing/README.md)、[アセット管理 README](./Assets/README.md)、[ショップ情報 README](./Shop/README.md) を参照してください。
 
 ---
 
