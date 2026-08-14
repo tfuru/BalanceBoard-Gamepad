@@ -22,13 +22,19 @@ board_comp_h_top = 6.2;
 // 基板底面クリアランス / スタンドオフ高さ [mm]
 standoff_h = 3.0;
 
-/* [Mounting Holes (Feather Standard)] */
+/* [Mounting Holes & Screws (M2 Standard Fastening)] */
 // ネジ穴X間隔 (1.8inch = 45.72mm) [mm]
 hole_dist_x = 45.72;
 // ネジ穴Y間隔 (0.7inch = 17.78mm) [mm]
 hole_dist_y = 17.78;
-// ネジ下穴 / インサート穴径 (M2用: 2.3〜2.5mm) [mm]
-screw_hole_dia = 2.4;
+// M2 ネジ下穴径 (ボトムケース固定用: 1.9〜2.0mm) [mm]
+screw_hole_dia = 2.0;
+// M2 ネジ通し穴径 (トップカバー貫通用: 2.4mm) [mm]
+screw_through_dia = 2.4;
+// M2 ネジ頭部ザグリ径 (なべ頭・トラス頭用: 4.6mm) [mm]
+screw_head_dia = 4.6;
+// M2 ネジ頭部ザグリ深さ [mm]
+screw_head_depth = 1.5;
 // ボス外径 [mm]
 boss_outer_dia = 5.2;
 
@@ -56,11 +62,15 @@ usb_cutout_h = 7.0;
 // JST バッテリーコネクタ開口部の有効化
 jst_cutout_enable = true;
 // JST 開口部幅 [mm]
-jst_cutout_w = 9.0;
+jst_cutout_w = 9.5;
 // リセットボタン穴の有効化
 reset_hole_enable = true;
+// リセットボタン中心位置 (USB端面からのX距離) [mm]
+reset_btn_offset_x = 10.5;
+// リセットボタン中心位置 (Y軸オフセット: RSTピン列側) [mm]
+reset_btn_offset_y = -5.8;
 // リセット穴径 [mm]
-reset_hole_dia = 3.0;
+reset_hole_dia = 3.5;
 // 底面通気スリットの有効化
 vent_slits_enable = true;
 
@@ -169,15 +179,16 @@ module huzzah32_bottom() {
         }
     }
 
-    // ネジ固定ボス & スタンドオフ
+    // ネジ固定ボス & スタンドオフ (M2貫通締結用)
     hx = hole_dist_x / 2;
     hy = hole_dist_y / 2;
     for (pos = [[-hx, -hy], [-hx, hy], [hx, -hy], [hx, hy]]) {
         translate([pos[0], pos[1], floor_t]) {
             difference() {
                 cylinder(d = boss_outer_dia, h = standoff_h);
-                translate([0, 0, -0.1])
-                    cylinder(d = screw_hole_dia, h = standoff_h + 0.2);
+                // ボトム側下穴 (深さ: スタンドオフ + 底面半分)
+                translate([0, 0, -floor_t/2])
+                    cylinder(d = screw_hole_dia, h = standoff_h + floor_t + 0.2);
             }
         }
     }
@@ -201,23 +212,28 @@ module huzzah32_top() {
         translate([-outer_l/2 - 1, 0, -0.1])
             cube([wall_t * 2 + 2, usb_cutout_w + 1.0, 3.5], center = true);
 
-        // リセットボタン穴
+        // JST バッテリーコネクタ逃げ・開口部 (+Y側側壁)
+        if (jst_cutout_enable) {
+            translate([-hole_dist_x/2 + 5, outer_w/2, -0.1])
+                cube([jst_cutout_w, wall_t * 2 + 2, inner_h_top * 2], center = true);
+        }
+
+        // リセットボタン穴 (RSTピン列側オフセット)
         if (reset_hole_enable) {
-            // HUZZAH32 リセットボタン位置 (USB寄り・天面)
-            translate([-board_l/2 + 8.5, 0, -1])
+            translate([-board_l/2 + reset_btn_offset_x, reset_btn_offset_y, -1])
                 cylinder(d = reset_hole_dia, h = outer_h_top + 2);
         }
 
-        // M2 ネジ通し穴 & 皿ザグリ (4箇所)
+        // M2 ネジ通し穴 & なべ頭・トラス頭用ザグリ (4箇所貫通固定)
         hx = hole_dist_x / 2;
         hy = hole_dist_y / 2;
         for (pos = [[-hx, -hy], [-hx, hy], [hx, -hy], [hx, hy]]) {
             translate([pos[0], pos[1], -1]) {
-                // ネジシャフト通し穴 (M2クリアランス: 2.3mm)
-                cylinder(d = 2.3, h = outer_h_top + 2);
-                // 皿頭/なべ頭ザグリ
-                translate([0, 0, outer_h_top - 1.2])
-                    cylinder(d = 4.4, h = 3);
+                // M2 ネジシャフト通し穴 (2.4mm)
+                cylinder(d = screw_through_dia, h = outer_h_top + 2);
+                // M2 ネジ頭部ザグリ (天面側: 4.6mm径 / 深さ 1.5mm)
+                translate([0, 0, outer_h_top + 1 - screw_head_depth])
+                    cylinder(d = screw_head_dia, h = screw_head_depth + 2);
             }
         }
     }
@@ -240,20 +256,25 @@ module board_mockup() {
         }
     }
 
-    // Micro-USB コネクタ
+    // Micro-USB コネクタ (-X側)
     color([0.8, 0.8, 0.8])
         translate([-board_l/2 + 2.5, 0, board_h + 1.5])
             cube([7.5, 8.0, 3.0], center = true);
 
-    // ESP32-WROOM / HUZZAH32 モジュール
+    // ESP32-WROOM / HUZZAH32 モジュール (+X側)
     color([0.3, 0.3, 0.3])
         translate([8, 0, board_h + 1.6])
             cube([18, 16, 3.2], center = true);
 
-    // JST コネクタ
+    // JST コネクタ (+Y側)
     if (jst_cutout_enable) {
-        color([0.9, 0.9, 0.9])
-            translate([-hole_dist_x/2 + 5, board_w/2 - 3.5, board_h + 3.0])
-                cube([7.0, 6.0, 6.0], center = true);
+        color([0.2, 0.2, 0.2])
+            translate([-hole_dist_x/2 + 5, board_w/2 - 3.5, board_h + 3.75])
+                cube([7.0, 6.0, 7.5], center = true);
     }
+
+    // リセットボタン (-Y側 / RSTピン寄り)
+    color([0.7, 0.7, 0.7])
+        translate([-board_l/2 + reset_btn_offset_x, reset_btn_offset_y, board_h + 1.0])
+            cube([3.5, 6.0, 2.0], center = true);
 }
