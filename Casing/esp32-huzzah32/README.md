@@ -45,10 +45,12 @@ OpenSCAD の Customizer またはスクリプト先頭の変数を変更する�
 | `screw_hole_dia` | `2.0 mm` | ボトムケース側 M2 ネジ下穴径（直接締結・タッピング用） |
 | `screw_through_dia` | `2.4 mm` | トップカバー側 M2 ネジシャフト通し穴径 |
 | `screw_head_dia` | `4.6 mm` | M2 なべ頭・トラス頭ネジ用天面ザグリ径 |
-| `screw_head_depth` | `1.5 mm` | 天面ネジ頭ザグリ深さ |
+| `screw_head_depth` | `0.5 mm` | 天面ネジ頭ザグリ深さ |
 | `boss_outer_dia` | `5.2 mm` | ネジ固定ボス・スタンドオフの外径 |
+| `usb_cutout_top_h` | `4.0 mm` | トップカバー側 Micro-USB 切り欠き高さ |
 | `jst_cutout_enable` | `true` | JST バッテリーコネクタ開口部（ボトム・トップ両側壁） |
-| `reset_hole_enable`| `true` | リセットボタン用アクセス穴（RSTピン側 `Y=-5.8mm` / 直径 `3.5mm`） |
+| `jst_offset_x` | `-12.86 mm` | JST コネクタ中心位置（ネジ穴中心基準、元位置より+5mm移動） |
+| `reset_hole_enable`| `false` | リセットボタン用アクセス穴（無効：穴なし） |
 | `vent_slits_enable`| `true` | ケース底面通気スリットの有無 |
 
 ---

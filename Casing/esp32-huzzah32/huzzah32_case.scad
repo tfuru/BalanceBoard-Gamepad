@@ -34,7 +34,7 @@ screw_through_dia = 2.4;
 // M2 ネジ頭部ザグリ径 (なべ頭・トラス頭用: 4.6mm) [mm]
 screw_head_dia = 4.6;
 // M2 ネジ頭部ザグリ深さ [mm]
-screw_head_depth = 1.5;
+screw_head_depth = 0.5;
 // ボス外径 [mm]
 boss_outer_dia = 5.2;
 
@@ -57,14 +57,18 @@ lip_clearance = 0.2;
 /* [Cutout Features] */
 // Micro-USB 開口部幅 [mm]
 usb_cutout_w = 11.0;
-// Micro-USB 開口部高さ [mm]
+// Micro-USB 開口部高さ (ボトム側) [mm]
 usb_cutout_h = 7.0;
+// Micro-USB 開口部高さ (トップ側) [mm]
+usb_cutout_top_h = 4.0;
 // JST バッテリーコネクタ開口部の有効化
 jst_cutout_enable = true;
 // JST 開口部幅 [mm]
 jst_cutout_w = 9.5;
+// JST コネクタ中心位置 (ネジ穴中心基準Xオフセット: 元位置より+5mm移動) [mm]
+jst_offset_x = -hole_dist_x/2 + 10;
 // リセットボタン穴の有効化
-reset_hole_enable = true;
+reset_hole_enable = false;
 // リセットボタン中心位置 (USB端面からのX距離) [mm]
 reset_btn_offset_x = 10.5;
 // リセットボタン中心位置 (Y軸オフセット: RSTピン列側) [mm]
@@ -166,7 +170,7 @@ module huzzah32_bottom() {
 
         // JST バッテリーコネクタ開口部 (+Y側 / USB寄り)
         if (jst_cutout_enable) {
-            translate([-hole_dist_x/2 + 5, outer_w/2, floor_t + standoff_h + board_h + 3])
+            translate([jst_offset_x, outer_w/2, floor_t + standoff_h + board_h + 3])
                 cube([jst_cutout_w, wall_t * 2 + 2, 8], center = true);
         }
 
@@ -208,13 +212,13 @@ module huzzah32_top() {
         translate([0, 0, -0.1])
             rounded_box(outer_l - wall_t + lip_clearance * 2, outer_w - wall_t + lip_clearance * 2, lip_h + 0.2, max(0.5, corner_r - wall_t/2));
 
-        // Micro-USB 上部クリアランス逃げ
-        translate([-outer_l/2 - 1, 0, -0.1])
-            cube([wall_t * 2 + 2, usb_cutout_w + 1.0, 3.5], center = true);
+        // Micro-USB 上部クリアランス逃げ (高さ 4.0mm)
+        translate([-outer_l/2 - 1, 0, usb_cutout_top_h / 2])
+            cube([wall_t * 2 + 2, usb_cutout_w + 1.0, usb_cutout_top_h + 0.2], center = true);
 
         // JST バッテリーコネクタ逃げ・開口部 (+Y側側壁)
         if (jst_cutout_enable) {
-            translate([-hole_dist_x/2 + 5, outer_w/2, -0.1])
+            translate([jst_offset_x, outer_w/2, -0.1])
                 cube([jst_cutout_w, wall_t * 2 + 2, inner_h_top * 2], center = true);
         }
 
@@ -231,7 +235,7 @@ module huzzah32_top() {
             translate([pos[0], pos[1], -1]) {
                 // M2 ネジシャフト通し穴 (2.4mm)
                 cylinder(d = screw_through_dia, h = outer_h_top + 2);
-                // M2 ネジ頭部ザグリ (天面側: 4.6mm径 / 深さ 1.5mm)
+                // M2 ネジ頭部ザグリ (天面側: 4.6mm径 / 深さ 0.5mm)
                 translate([0, 0, outer_h_top + 1 - screw_head_depth])
                     cylinder(d = screw_head_dia, h = screw_head_depth + 2);
             }
@@ -269,7 +273,7 @@ module board_mockup() {
     // JST コネクタ (+Y側)
     if (jst_cutout_enable) {
         color([0.2, 0.2, 0.2])
-            translate([-hole_dist_x/2 + 5, board_w/2 - 3.5, board_h + 3.75])
+            translate([jst_offset_x, board_w/2 - 3.5, board_h + 3.75])
                 cube([7.0, 6.0, 7.5], center = true);
     }
 
