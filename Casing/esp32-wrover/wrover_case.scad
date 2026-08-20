@@ -22,15 +22,21 @@ board_comp_h_top = 8.5;
 // 基板底面クリアランス / スタンドオフ高さ (ピンヘッダ足用) [mm]
 standoff_h = 4.0;
 
-/* [Mounting Holes] */
+/* [Mounting Holes & Screws (M2 Standard Fastening)] */
 // ネジ穴X間隔 [mm]
 hole_dist_x = 61.0;
 // ネジ穴Y間隔 [mm]
 hole_dist_y = 22.0;
-// ネジ下穴 / インサート穴径 (M2/M2.5用) [mm]
-screw_hole_dia = 2.4;
+// M2 ネジ下穴径 (ボトムケース固定用: 1.9〜2.0mm) [mm]
+screw_hole_dia = 2.0;
+// M2 ネジ通し穴径 (トップカバー貫通用: 2.4mm) [mm]
+screw_through_dia = 2.4;
+// M2 ネジ頭部ザグリ径 (なべ頭・トラス頭用: 4.6mm) [mm]
+screw_head_dia = 4.6;
+// M2 ネジ頭部ザグリ深さ [mm]
+screw_head_depth = 0.5;
 // ボス外径 [mm]
-boss_outer_dia = 5.4;
+boss_outer_dia = 5.2;
 
 /* [Case Parameters] */
 // 側壁厚み [mm]
@@ -169,15 +175,16 @@ module wrover_bottom() {
         }
     }
 
-    // ネジ固定ボス & スタンドオフ (4隅)
+    // ネジ固定ボス & スタンドオフ (M2貫通締結用)
     hx = hole_dist_x / 2;
     hy = hole_dist_y / 2;
     for (pos = [[-hx, -hy], [-hx, hy], [hx, -hy], [hx, hy]]) {
         translate([pos[0], pos[1], floor_t]) {
             difference() {
                 cylinder(d = boss_outer_dia, h = standoff_h);
-                translate([0, 0, -0.1])
-                    cylinder(d = screw_hole_dia, h = standoff_h + 0.2);
+                // ボトム側下穴 (深さ: スタンドオフ + 底面半分)
+                translate([0, 0, -floor_t/2])
+                    cylinder(d = screw_hole_dia, h = standoff_h + floor_t + 0.2);
             }
         }
     }
@@ -220,16 +227,16 @@ module wrover_top() {
             }
         }
 
-        // M2 / M2.5 ネジ通し穴 & 皿ザグリ (4箇所)
+        // M2 ネジ通し穴 & なべ頭・トラス頭用ザグリ (4箇所貫通固定)
         hx = hole_dist_x / 2;
         hy = hole_dist_y / 2;
         for (pos = [[-hx, -hy], [-hx, hy], [hx, -hy], [hx, hy]]) {
             translate([pos[0], pos[1], -1]) {
-                // ネジシャフト通し穴
-                cylinder(d = 2.4, h = outer_h_top + 2);
-                // 皿頭/なべ頭ザグリ
-                translate([0, 0, outer_h_top - 1.4])
-                    cylinder(d = 4.8, h = 3);
+                // M2 ネジシャフト通し穴 (2.4mm)
+                cylinder(d = screw_through_dia, h = outer_h_top + 2);
+                // M2 ネジ頭部ザグリ (天面側: 4.6mm径 / 深さ 0.5mm)
+                translate([0, 0, outer_h_top + 1 - screw_head_depth])
+                    cylinder(d = screw_head_dia, h = screw_head_depth + 2);
             }
         }
     }
