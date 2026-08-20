@@ -48,7 +48,7 @@ OpenSCAD の Customizer またはスクリプト先頭の変数を変更する�
 | `screw_head_depth` | `0.5 mm` | 天面ネジ頭ザグリ深さ |
 | `boss_outer_dia` | `5.2 mm` | ネジ固定ボス・スタンドオフの外径 |
 | `usb_cutout_top_h` | `4.0 mm` | トップカバー側 Micro-USB 切り欠き高さ |
-| `jst_cutout_enable` | `true` | JST バッテリーコネクタ開口部（ボトム・トップ両側壁） |
+| `jst_cutout_enable` | `false` | JST バッテリーコネクタ開口部（無効：穴なし） |
 | `jst_offset_x` | `-12.86 mm` | JST コネクタ中心位置（ネジ穴中心基準、元位置より+5mm移動） |
 | `reset_hole_enable`| `false` | リセットボタン用アクセス穴（無効：穴なし） |
 | `vent_slits_enable`| `true` | ケース底面通気スリットの有無 |

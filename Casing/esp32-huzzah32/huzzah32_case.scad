@@ -62,7 +62,7 @@ usb_cutout_h = 7.0;
 // Micro-USB 開口部高さ (トップ側) [mm]
 usb_cutout_top_h = 4.0;
 // JST バッテリーコネクタ開口部の有効化
-jst_cutout_enable = true;
+jst_cutout_enable = false;
 // JST 開口部幅 [mm]
 jst_cutout_w = 9.5;
 // JST コネクタ中心位置 (ネジ穴中心基準Xオフセット: 元位置より+5mm移動) [mm]
